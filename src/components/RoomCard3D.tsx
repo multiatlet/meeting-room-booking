@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Box, Plane, Environment, MeshWobbleMaterial } from '@react-three/drei';
-import { Room } from '../store';
+import type { Room } from '../store';  // ← исправлено: type-only import
 
 interface RoomCard3DProps {
   room: Room;
@@ -10,10 +10,10 @@ interface RoomCard3DProps {
 }
 
 const RoomCard3D: React.FC<RoomCard3DProps> = ({ room, isSelected, onClick }) => {
-  const meshRef = useRef<any>();
+  const meshRef = useRef<any>(null);
   const [hovered, setHovered] = useState(false);
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock }) => {  // ← исправлено: передаём колбэк
     if (meshRef.current) {
       meshRef.current.rotation.y = Math.sin(clock.getElapsedTime() * 0.2) * 0.1;
       meshRef.current.position.y = Math.sin(clock.getElapsedTime() * 0.5) * 0.05;
