@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import useStore, { Room } from '../store';
+import useStore from '../store';
+import type { Room } from '../store';
 
 interface TimeSlotGridProps {
   room: Room;
@@ -82,13 +83,13 @@ const TimeSlotGrid: React.FC<TimeSlotGridProps> = ({ room, date }) => {
               key={slot}
               disabled={booked}
               onClick={() => handleSlotClick(slot)}
-              className={`py-2.5 px-1 rounded-xl text-sm font-medium transition-all ${
-                booked
-                  ? 'bg-gray-700/40 text-gray-500 cursor-not-allowed'
-                  : isSelected
-                  ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30 scale-105'
-                  : 'bg-green-500/20 text-green-300 hover:bg-green-500/30 border border-green-500/30'
-              }`}
+              className={`py-3 px-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+  booked
+    ? 'bg-gray-800/30 text-gray-500 cursor-not-allowed border border-gray-700/30'
+    : isSelected
+    ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/40 scale-105 border-0'
+    : 'bg-white/5 text-white/90 hover:bg-white/10 border border-white/10 hover:border-white/20 hover:scale-[1.02]'
+}`}
             >
               {slot}
             </button>

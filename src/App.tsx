@@ -31,16 +31,22 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
-        {rooms.map((room) => (
+      <div className="mb-10">
+  <h2 className="text-white/70 text-sm uppercase tracking-wider mb-3 ml-1">Выберите помещение</h2>
+  <div className="flex flex-row gap-5 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+    {rooms.map((room) => (
+      <div key={room.id} className="snap-start min-w-[260px] md:min-w-[280px] lg:min-w-[300px]">
+        <Suspense fallback={<div className="h-44 glass-card animate-pulse rounded-2xl" />}>
           <RoomCard3D
-            key={room.id}
             room={room}
             isSelected={selectedRoomId === room.id}
             onClick={() => setSelectedRoom(room.id)}
           />
-        ))}
+        </Suspense>
       </div>
+    ))}
+  </div>
+</div>
 
       {selectedRoom ? (
         <TimeSlotGrid room={selectedRoom} date={selectedDate} />

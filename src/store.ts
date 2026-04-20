@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { parseISO } from 'date-fns';
-import { subscribeToBookings, addBookingToFirebase, deleteBookingFromFirebase, Booking } from './firebase';
+import { subscribeToBookings, addBookingToFirebase, deleteBookingFromFirebase } from './firebase';
+import type { Booking } from './firebase';
 
 export type RoomType = 'conference' | 'large' | 'small';
 
@@ -29,11 +30,11 @@ interface AppState {
 
 const useStore = create<AppState>((set, get) => ({
   rooms: [
-    { id: 'conf-1', name: 'Конференц-зал', type: 'conference', capacity: 30, color: '#3b82f6' },
-    { id: 'large-1', name: 'Большая переговорная', type: 'large', capacity: 15, color: '#8b5cf6' },
-    { id: 'small-1', name: 'Малая переговорная A', type: 'small', capacity: 6, color: '#10b981' },
-    { id: 'small-2', name: 'Малая переговорная B', type: 'small', capacity: 6, color: '#f59e0b' },
-  ],
+  { id: 'conf-1', name: 'Конференц-зал', type: 'conference', capacity: 30, color: '#3b82f6' },
+  { id: 'large-1', name: 'Большая переговорная', type: 'large', capacity: 15, color: '#8b5cf6' },
+  { id: 'small-1', name: 'Малая переговорная A', type: 'small', capacity: 2, color: '#10b981' },
+  { id: 'small-2', name: 'Малая переговорная B', type: 'small', capacity: 2, color: '#f59e0b' },
+],
   bookings: [],
   selectedRoomId: null,
   selectedDate: new Date(),
