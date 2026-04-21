@@ -3,7 +3,7 @@ import { format, addDays, isSameDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import useStore from '../store';
 
-// Временные слоты с 8:00 до 18:00 с шагом 30 минут
+// Жёстко заданные временные слоты (с 08:00 до 18:00, шаг 30 минут)
 const TIME_SLOTS = [
   '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
   '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
@@ -11,9 +11,9 @@ const TIME_SLOTS = [
   '17:00', '17:30', '18:00'
 ];
 
-const DURATION_OPTIONS = [30, 60, 90, 120, 180, 240];
+const DURATION_OPTIONS = [30, 60, 90, 120, 180, 240]; // минуты
 
-// Вспомогательная функция для добавления минут к строке времени
+// Вспомогательная функция: добавить минуты к строке времени "HH:mm"
 const addMinutesToTime = (time: string, mins: number): string => {
   const [h, m] = time.split(':').map(Number);
   const date = new Date();
@@ -21,16 +21,22 @@ const addMinutesToTime = (time: string, mins: number): string => {
   return format(date, 'HH:mm');
 };
 
+// Функция для добавления 30 минут (используется при фильтрации слотов)
+const add30min = (time: string): string => addMinutesToTime(time, 30);
+
 const Calendar: React.FC = () => {
   const { rooms, bookings, selectedDate, addBooking, isSlotAvailable } = useStore();
+
+  // Состояние модального окна
   const [modalData, setModalData] = useState<{ roomId: string; date: Date } | null>(null);
   const [userName, setUserName] = useState('');
   const [startTime, setStartTime] = useState(TIME_SLOTS[0]);
   const [duration, setDuration] = useState(60);
 
-  // Генерируем 7 дней начиная с selectedDate
+  // 7 дней, начиная с selectedDate
   const dates = Array.from({ length: 7 }, (_, i) => addDays(selectedDate, i));
 
+  // Получить бронирования для конкретной комнаты и дня
   const getBookingsForCell = (roomId: string, date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     return bookings
@@ -38,6 +44,7 @@ const Calendar: React.FC = () => {
       .sort((a, b) => a.start.localeCompare(b.start));
   };
 
+  // Открыть модальное окно
   const openModal = (roomId: string, date: Date) => {
     setModalData({ roomId, date });
     setUserName('');
@@ -47,6 +54,7 @@ const Calendar: React.FC = () => {
 
   const closeModal = () => setModalData(null);
 
+  // Сохранение бронирования
   const handleSave = async () => {
     if (!modalData) return;
     if (!userName.trim()) {
@@ -77,12 +85,11 @@ const Calendar: React.FC = () => {
     closeModal();
   };
 
-  // Доступные начальные слоты (не занятые полностью 30-минутные интервалы)
+  // Доступные начальные слоты (фильтруем по занятости 30-минутных интервалов)
   const availableStartSlots = modalData
     ? TIME_SLOTS.filter(slot => {
         const dateStr = format(modalData.date, 'yyyy-MM-dd');
-        const slotEnd = addMinutesToTime(slot, 30);
-        return isSlotAvailable(modalData.roomId, dateStr, slot, slotEnd);
+        return isSlotAvailable(modalData.roomId, dateStr, slot, add30min(slot));
       })
     : [];
 
@@ -90,103 +97,98 @@ const Calendar: React.FC = () => {
 
   return (
     <div className="overflow-x-auto scrollbar-hide">
-      <div className="min-w-[900px]">
-        {/* Заголовки дней */}
-        <div className="grid grid-cols-[220px_repeat(7,1fr)] gap-3 mb-3">
-          <div className="p-3 text-[#2c4f7f] text-sm font-medium uppercase tracking-wider">
-            Помещение
-          </div>
-          {dates.map(date => {
-            const isToday = isSameDay(date, new Date());
-            return (
-              <div
-                key={date.toISOString()}
-                className={`glass-card p-3 text-center ${
-                  isToday ? 'ring-2 ring-[#1a5cff]/30' : ''
-                }`}
-              >
-                <div className="text-xs uppercase tracking-wide text-[#2c4f7f] opacity-80">
-                  {format(date, 'EEE', { locale: ru })}
-                </div>
-                <div className="text-sm font-medium text-[#0a2a44]">
-                  {format(date, 'd MMM', { locale: ru })}
-                </div>
-              </div>
-            );
-          })}
+      {/* Единый контейнер сетки */}
+      <div className="grid grid-cols-[220px_repeat(7,1fr)] gap-3 min-w-[900px]">
+        {/* Пустая ячейка (верхний левый угол) */}
+        <div className="p-3 text-white/50 text-sm font-medium uppercase tracking-wider">
+          Помещение
         </div>
 
-        {/* Строки комнат */}
-        <div className="space-y-3">
-          {rooms.map(room => (
-            <div key={room.id} className="grid grid-cols-[220px_repeat(7,1fr)] gap-3">
-              {/* Левая колонка: название комнаты */}
-              <div className="glass-card p-3 flex items-center gap-2">
-                <span
-                  className="w-3 h-3 rounded-full shadow-sm"
-                  style={{ backgroundColor: room.color }}
-                />
-                <span className="text-[#0a2a44] font-medium truncate">{room.name}</span>
-                <span className="text-[#b0c8e0] text-xs ml-auto">{room.capacity} мест</span>
+        {/* Заголовки дней (7 колонок) */}
+        {dates.map(date => {
+          const isToday = isSameDay(date, new Date());
+          return (
+            <div
+              key={date.toISOString()}
+              className={`glass-card p-3 text-center ${
+                isToday ? 'ring-2 ring-blue-400/50 shadow-[0_0_10px_rgba(59,130,246,0.3)]' : ''
+              }`}
+            >
+              <div className="text-xs uppercase tracking-wide text-white/70">
+                {format(date, 'EEE', { locale: ru })}
               </div>
-
-              {/* Ячейки бронирования */}
-              {dates.map(date => {
-                const cellBookings = getBookingsForCell(room.id, date);
-                return (
-                  <button
-                    key={date.toISOString()}
-                    onClick={() => openModal(room.id, date)}
-                    className="glass-card p-3 text-left transition-all hover:bg-white/80 hover:scale-[1.01] cursor-pointer min-h-[90px]"
-                  >
-                    {cellBookings.length === 0 ? (
-                      <span className="text-[#b0c8e0] text-sm">Свободно</span>
-                    ) : (
-                      <div className="space-y-1">
-                        {cellBookings.slice(0, 3).map(b => (
-                          <div key={b.id} className="text-xs">
-                            <div className="text-[#0a2a44] font-medium truncate">
-                              {b.userName}
-                            </div>
-                            <div className="text-[#2c4f7f]">
-                              {b.start}–{b.end}
-                            </div>
-                          </div>
-                        ))}
-                        {cellBookings.length > 3 && (
-                          <div className="text-[#b0c8e0] text-xs">
-                            +{cellBookings.length - 3}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
+              <div className="text-sm font-medium text-white">
+                {format(date, 'd MMM', { locale: ru })}
+              </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
+
+        {/* Строки комнат + ячейки */}
+        {rooms.map(room => (
+          <React.Fragment key={room.id}>
+            {/* Название комнаты (левая колонка) */}
+            <div className="glass-card p-3 flex items-center gap-2">
+              <span
+                className="w-3 h-3 rounded-full shadow-[0_0_6px_currentColor]"
+                style={{ backgroundColor: room.color, color: room.color }}
+              />
+              <span className="text-white font-medium truncate">{room.name}</span>
+              <span className="text-white/40 text-xs ml-auto">{room.capacity} мест</span>
+            </div>
+
+            {/* 7 ячеек для каждой даты */}
+            {dates.map(date => {
+              const cellBookings = getBookingsForCell(room.id, date);
+              return (
+                <button
+                  key={date.toISOString()}
+                  onClick={() => openModal(room.id, date)}
+                  className="glass-card p-3 text-left transition-all hover:bg-white/10 hover:scale-[1.01] cursor-pointer min-h-[90px]"
+                >
+                  {cellBookings.length === 0 ? (
+                    <span className="text-white/40 text-sm">Свободно</span>
+                  ) : (
+                    <div className="space-y-1">
+                      {cellBookings.slice(0, 3).map(b => (
+                        <div key={b.id} className="text-xs">
+                          <div className="text-white font-medium truncate">
+                            {b.userName}
+                          </div>
+                          <div className="text-white/50">{b.start}–{b.end}</div>
+                        </div>
+                      ))}
+                      {cellBookings.length > 3 && (
+                        <div className="text-white/30 text-xs">+{cellBookings.length - 3}</div>
+                      )}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </React.Fragment>
+        ))}
       </div>
 
-      {/* Модальное окно */}
+      {/* Модальное окно бронирования */}
       {modalData && selectedRoom && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={closeModal}
         >
           <div
-            className="glass-panel w-full max-w-md p-6"
+            className="bg-[#1e293b] border border-white/10 p-6 rounded-2xl w-[400px] max-w-full shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
-            <h2 className="text-xl font-semibold text-[#0a2a44] mb-1">
+            <h2 className="text-xl font-semibold text-white mb-1">
               {selectedRoom.name}
             </h2>
-            <p className="text-[#2c4f7f] text-sm mb-6">
+            <p className="text-white/60 text-sm mb-6">
               {format(modalData.date, 'd MMMM yyyy, EEEE', { locale: ru })}
             </p>
 
             {availableStartSlots.length === 0 ? (
-              <p className="text-[#b02b3a] text-center py-4">
+              <p className="text-red-400 text-center py-4">
                 Нет свободного времени
               </p>
             ) : (
@@ -196,18 +198,18 @@ const Calendar: React.FC = () => {
                   placeholder="Ваше имя"
                   value={userName}
                   onChange={e => setUserName(e.target.value)}
-                  className="glass-input"
+                  className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:ring-2 focus:ring-blue-500/50 outline-none"
                   autoFocus
                 />
 
                 <div>
-                  <label className="block text-[#2c4f7f] text-sm mb-2">
+                  <label className="block text-white/70 text-sm mb-2">
                     Начало
                   </label>
                   <select
                     value={startTime}
                     onChange={e => setStartTime(e.target.value)}
-                    className="glass-input"
+                    className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white"
                   >
                     {availableStartSlots.map(slot => (
                       <option key={slot} value={slot}>{slot}</option>
@@ -216,13 +218,13 @@ const Calendar: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[#2c4f7f] text-sm mb-2">
+                  <label className="block text-white/70 text-sm mb-2">
                     Длительность
                   </label>
                   <select
                     value={duration}
                     onChange={e => setDuration(parseInt(e.target.value))}
-                    className="glass-input"
+                    className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white"
                   >
                     {DURATION_OPTIONS.map(mins => (
                       <option key={mins} value={mins}>
@@ -232,20 +234,23 @@ const Calendar: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="bg-white/40 backdrop-blur-sm rounded-full px-5 py-3 text-sm text-[#2c4f7f]">
+                <div className="bg-white/5 rounded-xl p-3 text-sm text-white/70">
                   🕒 {startTime} – {addMinutesToTime(startTime, duration)}
                 </div>
               </div>
             )}
 
             <div className="flex gap-3 mt-8">
-              <button onClick={closeModal} className="btn-secondary flex-1">
+              <button
+                onClick={closeModal}
+                className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 transition"
+              >
                 Отмена
               </button>
               <button
                 onClick={handleSave}
                 disabled={availableStartSlots.length === 0}
-                className="btn-primary flex-1"
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium shadow-lg shadow-blue-600/30 hover:scale-[1.02] transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Забронировать
               </button>
