@@ -2,45 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    @apply bg-[#f2f5f9] text-[#0a2a44] antialiased;
-  }
-}
-
 @layer components {
-  /* Стеклянная карточка — светлая тема */
   .glass-card {
-    @apply bg-white/70 backdrop-blur-xl border border-[#1a5cff]/10 rounded-2xl shadow-sm;
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl;
   }
-
-  /* Панель для модального окна */
   .glass-panel {
-    @apply bg-white/85 backdrop-blur-2xl border border-[#1a5cff]/10 rounded-2xl shadow-xl;
-  }
-
-  /* Входные поля */
-  .glass-input {
-    @apply w-full bg-white/50 backdrop-blur-sm border border-[#1a5cff]/20 rounded-full px-5 py-3 text-[#0a2a44] placeholder-[#b0c8e0] focus:ring-2 focus:ring-[#1a5cff]/40 focus:border-transparent outline-none transition-all;
-  }
-
-  /* Кнопка первичная */
-  .btn-primary {
-    @apply px-6 py-3 bg-[#1a5cff] text-white font-medium rounded-full shadow-md shadow-[#1a5cff]/20 hover:bg-[#0040d0] hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
-  }
-
-  /* Кнопка вторичная */
-  .btn-secondary {
-    @apply px-6 py-3 bg-white/60 backdrop-blur-sm border border-[#1a5cff]/20 text-[#0a2a44] font-medium rounded-full hover:bg-white/80 transition-all duration-200;
-  }
-
-  /* Кнопка-иконка (для навигации по датам) */
-  .icon-btn {
-    @apply w-10 h-10 rounded-full glass-card flex items-center justify-center text-[#2c4f7f] hover:text-[#1a5cff] hover:border-[#1a5cff]/30 transition-all;
+    @apply bg-white/85 backdrop-blur-xl border border-[#1a5cff]/10 rounded-2xl;
   }
 }
 
-/* Скрытие скроллбара для горизонтальной прокрутки */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }

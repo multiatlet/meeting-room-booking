@@ -12,7 +12,7 @@ const App: React.FC = () => {
   }, [initializeFirebaseSync]);
 
   return (
-    <div className="min-h-screen bg-[#f2f5f9] p-4 md:p-6">
+    <div className="min-h-screen p-4 md:p-6 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#020617]">
       <div className="max-w-[1400px] mx-auto">
         <Header />
         <Calendar />

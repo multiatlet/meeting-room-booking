@@ -1,7 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, onValue, push, remove, set } from 'firebase/database';
 
-// Конфигурация будет подставлена из переменных окружения Vercel
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -43,7 +42,6 @@ export const subscribeToBookings = (callback: (bookings: Booking[]) => void) => 
   });
 };
 
-// Тип данных (используется в других файлах)
 export interface Booking {
   id: string;
   roomId: string;

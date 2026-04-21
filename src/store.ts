@@ -23,8 +23,6 @@ interface AppState {
   isSlotAvailable: (roomId: string, date: string, start: string, end: string) => boolean;
 }
 
-// Вспомогательная функция для создания даты в локальном часовом поясе
-// Гарантирует корректное сравнение времени, избегая смещения UTC
 export const createDateTime = (dateStr: string, timeStr: string): Date => {
   const [year, month, day] = dateStr.split('-').map(Number);
   const [hours, minutes] = timeStr.split(':').map(Number);
@@ -41,11 +39,8 @@ const useStore = create<AppState>((set, get) => ({
   bookings: [],
   selectedDate: new Date(),
 
-  // Инициализация синхронизации с Firebase
   initializeFirebaseSync: () => {
-    const unsubscribe = subscribeToBookings((bookings) => {
-      set({ bookings });
-    });
+    const unsubscribe = subscribeToBookings((bookings) => set({ bookings }));
     return unsubscribe;
   },
 
@@ -76,7 +71,6 @@ const useStore = create<AppState>((set, get) => ({
     }
   },
 
-  // Проверка, свободен ли временной слот
   isSlotAvailable: (roomId, date, start, end) => {
     const { bookings } = get();
     return !bookings.some(b => {
