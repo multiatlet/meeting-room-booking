@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { format, addDays, isSameDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import useStore, { createDateTime } from '../store';
+import useStore from '../store';
 
 // Предопределённые временные слоты (с 8:00 до 18:00, шаг 30 мин)
 const TIME_SLOTS = [
@@ -21,7 +21,7 @@ const addMinutesToTime = (time: string, mins: number): string => {
 };
 
 const Calendar: React.FC = () => {
-  const { rooms, bookings, selectedDate, setSelectedDate, addBooking, isSlotAvailable } = useStore();
+  const { rooms, bookings, selectedDate, addBooking, isSlotAvailable } = useStore();
   const [modalData, setModalData] = useState<{ roomId: string; date: Date } | null>(null);
   const [userName, setUserName] = useState('');
   const [startTime, setStartTime] = useState(TIME_SLOTS[0]);
@@ -55,7 +55,6 @@ const Calendar: React.FC = () => {
     const dateStr = format(modalData.date, 'yyyy-MM-dd');
     const endTime = addMinutesToTime(startTime, duration);
 
-    // Проверка, что бронь не выходит за пределы дня
     if (endTime < startTime) {
       alert('Некорректное время окончания');
       return;
