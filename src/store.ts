@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { parseISO } from 'date-fns';
 import { subscribeToBookings, addBookingToFirebase, deleteBookingFromFirebase } from './firebase';
 import type { Booking } from './firebase';
 
@@ -16,30 +15,33 @@ export interface Room {
 interface AppState {
   rooms: Room[];
   bookings: Booking[];
-  selectedRoomId: string | null;
   selectedDate: Date;
-  userName: string;
   initializeFirebaseSync: () => () => void;
-  setSelectedRoom: (id: string | null) => void;
   setSelectedDate: (date: Date) => void;
-  setUserName: (name: string) => void;
   addBooking: (booking: Omit<Booking, 'id'>) => Promise<void>;
   cancelBooking: (bookingId: string) => Promise<void>;
-  isSlotAvailable: (roomId: string, date: Date, start: string, end: string, excludeBookingId?: string) => boolean;
+  isSlotAvailable: (roomId: string, date: string, start: string, end: string) => boolean;
 }
+
+// Вспомогательная функция для создания даты в локальном часовом поясе
+// Гарантирует корректное сравнение времени, избегая смещения UTC
+export const createDateTime = (dateStr: string, timeStr: string): Date => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return new Date(year, month - 1, day, hours, minutes);
+};
 
 const useStore = create<AppState>((set, get) => ({
   rooms: [
-  { id: 'conf-1', name: 'Конференц-зал', type: 'conference', capacity: 30, color: '#3b82f6' },
-  { id: 'large-1', name: 'Большая переговорная', type: 'large', capacity: 15, color: '#8b5cf6' },
-  { id: 'small-1', name: 'Малая переговорная A', type: 'small', capacity: 2, color: '#10b981' },
-  { id: 'small-2', name: 'Малая переговорная B', type: 'small', capacity: 2, color: '#f59e0b' },
-],
+    { id: 'conf-1', name: 'Конференц-зал', type: 'conference', capacity: 30, color: '#3b82f6' },
+    { id: 'large-1', name: 'Большая переговорная', type: 'large', capacity: 15, color: '#8b5cf6' },
+    { id: 'small-1', name: 'Малая переговорная A', type: 'small', capacity: 2, color: '#10b981' },
+    { id: 'small-2', name: 'Малая переговорная B', type: 'small', capacity: 2, color: '#f59e0b' },
+  ],
   bookings: [],
-  selectedRoomId: null,
   selectedDate: new Date(),
-  userName: '',
 
+  // Инициализация синхронизации с Firebase
   initializeFirebaseSync: () => {
     const unsubscribe = subscribeToBookings((bookings) => {
       set({ bookings });
@@ -47,46 +49,45 @@ const useStore = create<AppState>((set, get) => ({
     return unsubscribe;
   },
 
-  setSelectedRoom: (id) => set({ selectedRoomId: id }),
   setSelectedDate: (date) => set({ selectedDate: date }),
-  setUserName: (name) => set({ userName: name }),
 
   addBooking: async (booking) => {
     const { isSlotAvailable } = get();
-    if (!isSlotAvailable(booking.roomId, parseISO(booking.date), booking.start, booking.end)) {
-      alert('Слот занят!');
+    if (!isSlotAvailable(booking.roomId, booking.date, booking.start, booking.end)) {
+      alert('Этот слот уже занят');
       return;
     }
-    await addBookingToFirebase(booking);
+    try {
+      await addBookingToFirebase(booking);
+      alert('✅ Комната забронирована!');
+    } catch (error) {
+      console.error('Ошибка при добавлении брони:', error);
+      alert('❌ Не удалось забронировать');
+    }
   },
 
   cancelBooking: async (bookingId) => {
-    await deleteBookingFromFirebase(bookingId);
+    try {
+      await deleteBookingFromFirebase(bookingId);
+      alert('🗑️ Бронь отменена');
+    } catch (error) {
+      console.error('Ошибка при отмене брони:', error);
+      alert('❌ Не удалось отменить бронь');
+    }
   },
 
-  isSlotAvailable: (roomId, date, start, end, excludeBookingId) => {
+  // Проверка, свободен ли временной слот
+  isSlotAvailable: (roomId, date, start, end) => {
     const { bookings } = get();
-    const dateStr = date.toISOString().split('T')[0];
     return !bookings.some(b => {
-      if (b.roomId !== roomId) return false;
-      if (b.date !== dateStr) return false;
-      if (excludeBookingId && b.id === excludeBookingId) return false;
-
-      const bookingStart = parseTimeString(b.start);
-      const bookingEnd = parseTimeString(b.end);
-      const slotStart = parseTimeString(start);
-      const slotEnd = parseTimeString(end);
-
-      return (slotStart < bookingEnd && slotEnd > bookingStart);
+      if (b.roomId !== roomId || b.date !== date) return false;
+      const bStart = createDateTime(b.date, b.start);
+      const bEnd = createDateTime(b.date, b.end);
+      const slotStart = createDateTime(date, start);
+      const slotEnd = createDateTime(date, end);
+      return slotStart < bEnd && slotEnd > bStart;
     });
   },
 }));
-
-function parseTimeString(time: string): Date {
-  const [h, m] = time.split(':').map(Number);
-  const d = new Date();
-  d.setHours(h, m, 0, 0);
-  return d;
-}
 
 export default useStore;
