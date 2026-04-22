@@ -1,24 +1,23 @@
 import React, { useEffect, useState } from 'react';
-
-const STORAGE_KEY = 'site_visits';
+import { subscribeToUniqueVisitorsCount } from '../firebase';
 
 const VisitorCounter: React.FC = () => {
-  const [visits, setVisits] = useState(0);
+  const [count, setCount] = useState<number | null>(null);
 
   useEffect(() => {
-    // Получаем текущее количество посещений из localStorage
-    const stored = localStorage.getItem(STORAGE_KEY);
-    let count = stored ? parseInt(stored, 10) : 0;
-    // Увеличиваем счётчик при каждом монтировании компонента (т.е. при загрузке страницы)
-    count += 1;
-    localStorage.setItem(STORAGE_KEY, count.toString());
-    setVisits(count);
+    const unsubscribe = subscribeToUniqueVisitorsCount((newCount) => {
+      setCount(newCount);
+    });
+
+    return () => unsubscribe();
   }, []);
 
+  if (count === null) return null;
+
   return (
-    <footer className="w-full py-4 mt-8 text-center text-[#b0c8e0] text-xs md:text-sm border-t border-white/10">
-      <span>👁️ Посещений: {visits}</span>
-    </footer>
+    <div className="fixed bottom-4 left-4 z-40 glass-card px-4 py-2 text-white text-sm shadow-lg">
+      👥 Уникальных посетителей: <span className="font-bold">{count}</span>
+    </div>
   );
 };
 
