@@ -19,8 +19,12 @@ interface AppState {
   initializeFirebaseSync: () => () => void;
   setSelectedDate: (date: Date) => void;
   addBooking: (booking: Omit<Booking, 'id'>) => Promise<void>;
-  cancelBooking: (bookingId: string) => Promise<void>;
+  cancelBooking: (bookingId: string) => Promise<boolean>;
   isSlotAvailable: (roomId: string, date: string, start: string, end: string) => boolean;
+  getCurrentUser: () => string;
+  setCurrentUser: (name: string) => void;
+  getNotificationEmails: () => string;
+  setNotificationEmails: (emails: string) => void;
 }
 
 export const createDateTime = (dateStr: string, timeStr: string): Date => {
@@ -28,6 +32,9 @@ export const createDateTime = (dateStr: string, timeStr: string): Date => {
   const [hours, minutes] = timeStr.split(':').map(Number);
   return new Date(year, month - 1, day, hours, minutes);
 };
+
+const STORAGE_USER_KEY = 'booking_user_name';
+const STORAGE_EMAILS_KEY = 'booking_notification_emails';
 
 const useStore = create<AppState>((set, get) => ({
   rooms: [
@@ -54,6 +61,7 @@ const useStore = create<AppState>((set, get) => ({
     }
     try {
       await addBookingToFirebase(booking);
+      localStorage.setItem(STORAGE_USER_KEY, booking.userName);
       alert('✅ Комната забронирована!');
     } catch (error) {
       console.error('Ошибка при добавлении брони:', error);
@@ -62,12 +70,21 @@ const useStore = create<AppState>((set, get) => ({
   },
 
   cancelBooking: async (bookingId) => {
+    const { bookings, getCurrentUser } = get();
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return false;
+    if (booking.userName !== getCurrentUser()) {
+      alert('Вы не можете удалить чужую бронь');
+      return false;
+    }
     try {
       await deleteBookingFromFirebase(bookingId);
       alert('🗑️ Бронь отменена');
+      return true;
     } catch (error) {
       console.error('Ошибка при отмене брони:', error);
       alert('❌ Не удалось отменить бронь');
+      return false;
     }
   },
 
@@ -81,6 +98,22 @@ const useStore = create<AppState>((set, get) => ({
       const slotEnd = createDateTime(date, end);
       return slotStart < bEnd && slotEnd > bStart;
     });
+  },
+
+  getCurrentUser: () => {
+    return localStorage.getItem(STORAGE_USER_KEY) || '';
+  },
+
+  setCurrentUser: (name: string) => {
+    localStorage.setItem(STORAGE_USER_KEY, name);
+  },
+
+  getNotificationEmails: () => {
+    return localStorage.getItem(STORAGE_EMAILS_KEY) || '';
+  },
+
+  setNotificationEmails: (emails: string) => {
+    localStorage.setItem(STORAGE_EMAILS_KEY, emails);
   },
 }));
 

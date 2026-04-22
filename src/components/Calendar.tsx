@@ -30,11 +30,20 @@ const addMinutesToTime = (time: string, mins: number): string => {
 
 // ==================== КОМПОНЕНТ ====================
 const Calendar: React.FC = () => {
-  const { rooms, bookings, selectedDate, addBooking, isSlotAvailable } = useStore();
+  const {
+    rooms,
+    bookings,
+    selectedDate,
+    addBooking,
+    cancelBooking,
+    isSlotAvailable,
+    getCurrentUser,
+    setCurrentUser
+  } = useStore();
 
   // Модальное окно
   const [modal, setModal] = useState<{ roomId: string; date: Date } | null>(null);
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState(getCurrentUser());
   const [startTime, setStartTime] = useState(TIME_SLOTS[0]);
   const [duration, setDuration] = useState(60);
 
@@ -51,7 +60,7 @@ const Calendar: React.FC = () => {
 
   const openModal = (roomId: string, date: Date) => {
     setModal({ roomId, date });
-    setUserName('');
+    setUserName(getCurrentUser());
     setStartTime(TIME_SLOTS[0]);
     setDuration(60);
   };
@@ -78,6 +87,10 @@ const Calendar: React.FC = () => {
       return;
     }
 
+    // Сохраняем имя текущего пользователя
+    setCurrentUser(userName.trim());
+
+    // Создаём бронь
     await addBooking({
       roomId: modal.roomId,
       date: dateStr,
@@ -85,7 +98,31 @@ const Calendar: React.FC = () => {
       end: endTime,
       userName: userName.trim(),
     });
+
+    // Отправляем email (вызов API)
+    try {
+      await fetch('/api/send-booking-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userName: userName.trim(),
+          roomName: rooms.find(r => r.id === modal.roomId)?.name,
+          date: format(modal.date, 'd MMMM yyyy', { locale: ru }),
+          start: startTime,
+          end: endTime,
+        }),
+      });
+    } catch (error) {
+      console.error('Ошибка отправки email:', error);
+    }
+
     closeModal();
+  };
+
+  const handleDelete = async (bookingId: string) => {
+    if (confirm('Удалить бронь?')) {
+      await cancelBooking(bookingId);
+    }
   };
 
   // Доступные начальные слоты (фильтрация по занятости)
@@ -97,18 +134,19 @@ const Calendar: React.FC = () => {
     : [];
 
   const selectedRoom = modal ? rooms.find(r => r.id === modal.roomId) : null;
+  const currentUser = getCurrentUser();
 
   // ==================== РЕНДЕР ====================
   return (
     <div className="overflow-x-auto scrollbar-hide">
-      {/* ЕДИНЫЙ GRID – строго одна таблица */}
+      {/* ЕДИНЫЙ GRID */}
       <div className="grid grid-cols-[220px_repeat(7,1fr)] gap-3 min-w-[900px]">
-        {/* 1. Пустая ячейка (верхний левый угол) */}
+        {/* Пустая ячейка */}
         <div className="p-3 text-[#b0c8e0] text-sm font-medium uppercase tracking-wider">
           Помещение
         </div>
 
-        {/* 2. Заголовки дат (ровно 7 колонок) */}
+        {/* Заголовки дат */}
         {dates.map(date => {
           const isToday = isSameDay(date, new Date());
           return (
@@ -128,11 +166,11 @@ const Calendar: React.FC = () => {
           );
         })}
 
-        {/* 3. Строки комнат (название + 7 ячеек) */}
+        {/* Строки комнат */}
         {rooms.map(room => (
           <React.Fragment key={room.id}>
-            {/* Левая колонка – название комнаты */}
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 flex items-center justify-between gap-2">
+            {/* Левая колонка – комната */}
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 flex flex-col justify-center min-h-[90px]">
               <div className="flex items-center gap-2">
                 <span
                   className="w-3 h-3 rounded-full shadow-[0_0_6px_currentColor]"
@@ -140,36 +178,56 @@ const Calendar: React.FC = () => {
                 />
                 <span className="text-white font-medium truncate">{room.name}</span>
               </div>
-              <span className="text-[#b0c8e0] text-xs">{room.capacity} мест</span>
+              <span className="text-[#b0c8e0] text-xs mt-1">{room.capacity} мест</span>
             </div>
 
-            {/* 7 ячеек календаря – ровно по одной на каждую дату */}
+            {/* 7 ячеек */}
             {dates.map(date => {
               const cellBookings = getBookingsForCell(room.id, date);
               return (
-                <button
+                <div
                   key={date.toISOString()}
-                  onClick={() => openModal(room.id, date)}
-                  className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 text-left transition-all hover:bg-white/10 hover:scale-[1.01] cursor-pointer min-h-[90px]"
+                  className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 min-h-[90px] flex flex-col"
                 >
-                  {cellBookings.length === 0 ? (
-                    <span className="text-[#b0c8e0] text-sm">Свободно</span>
-                  ) : (
-                    <div className="space-y-1">
-                      {cellBookings.slice(0, 3).map(b => (
-                        <div key={b.id} className="text-xs">
-                          <div className="text-white font-medium truncate">
-                            {b.userName}
+                  <button
+                    onClick={() => openModal(room.id, date)}
+                    className="flex-1 text-left w-full transition-all hover:bg-white/5 rounded-xl -m-1 p-1"
+                  >
+                    {cellBookings.length === 0 ? (
+                      <div className="flex items-center justify-center h-full">
+                        <span className="text-[#b0c8e0] text-sm">Свободно</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        {cellBookings.slice(0, 3).map(b => (
+                          <div key={b.id} className="text-xs flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-white font-medium truncate">
+                                {b.userName}
+                              </div>
+                              <div className="text-[#b0c8e0]">{b.start}–{b.end}</div>
+                            </div>
+                            {b.userName === currentUser && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(b.id);
+                                }}
+                                className="ml-1 text-[#b02b3a] hover:text-red-400 text-lg leading-none"
+                                title="Удалить"
+                              >
+                                ×
+                              </button>
+                            )}
                           </div>
-                          <div className="text-[#b0c8e0]">{b.start}–{b.end}</div>
-                        </div>
-                      ))}
-                      {cellBookings.length > 3 && (
-                        <div className="text-[#b0c8e0] text-xs">+{cellBookings.length - 3}</div>
-                      )}
-                    </div>
-                  )}
-                </button>
+                        ))}
+                        {cellBookings.length > 3 && (
+                          <div className="text-[#b0c8e0] text-xs">+{cellBookings.length - 3}</div>
+                        )}
+                      </div>
+                    )}
+                  </button>
+                </div>
               );
             })}
           </React.Fragment>
