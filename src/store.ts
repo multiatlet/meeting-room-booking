@@ -1,5 +1,11 @@
 import { create } from 'zustand';
-import { subscribeToBookings, addBookingToFirebase, deleteBookingFromFirebase } from './firebase';
+import {
+  subscribeToBookings,
+  addBookingToFirebase,
+  deleteBookingFromFirebase,
+  subscribeToNotificationEmails,
+  setNotificationEmails as setFirebaseNotificationEmails,
+} from './firebase';
 import type { Booking } from './firebase';
 
 export type RoomType = 'conference' | 'large' | 'small';
@@ -16,6 +22,7 @@ interface AppState {
   rooms: Room[];
   bookings: Booking[];
   selectedDate: Date;
+  notificationEmails: string; // общий список из Firebase
   initializeFirebaseSync: () => () => void;
   setSelectedDate: (date: Date) => void;
   addBooking: (booking: Omit<Booking, 'id'>) => Promise<void>;
@@ -23,8 +30,7 @@ interface AppState {
   isSlotAvailable: (roomId: string, date: string, start: string, end: string) => boolean;
   getCurrentUser: () => string;
   setCurrentUser: (name: string) => void;
-  getNotificationEmails: () => string;
-  setNotificationEmails: (emails: string) => void;
+  updateNotificationEmails: (emails: string) => Promise<void>; // только для админа
 }
 
 export const createDateTime = (dateStr: string, timeStr: string): Date => {
@@ -34,7 +40,6 @@ export const createDateTime = (dateStr: string, timeStr: string): Date => {
 };
 
 const STORAGE_USER_KEY = 'booking_user_name';
-const STORAGE_EMAILS_KEY = 'booking_notification_emails';
 
 const useStore = create<AppState>((set, get) => ({
   rooms: [
@@ -45,10 +50,15 @@ const useStore = create<AppState>((set, get) => ({
   ],
   bookings: [],
   selectedDate: new Date(),
+  notificationEmails: '',
 
   initializeFirebaseSync: () => {
-    const unsubscribe = subscribeToBookings((bookings) => set({ bookings }));
-    return unsubscribe;
+    const unsubBookings = subscribeToBookings((bookings) => set({ bookings }));
+    const unsubSettings = subscribeToNotificationEmails((emails) => set({ notificationEmails: emails }));
+    return () => {
+      unsubBookings();
+      unsubSettings();
+    };
   },
 
   setSelectedDate: (date) => set({ selectedDate: date }),
@@ -108,12 +118,8 @@ const useStore = create<AppState>((set, get) => ({
     localStorage.setItem(STORAGE_USER_KEY, name);
   },
 
-  getNotificationEmails: () => {
-    return localStorage.getItem(STORAGE_EMAILS_KEY) || '';
-  },
-
-  setNotificationEmails: (emails: string) => {
-    localStorage.setItem(STORAGE_EMAILS_KEY, emails);
+  updateNotificationEmails: async (emails: string) => {
+    await setFirebaseNotificationEmails(emails);
   },
 }));
 

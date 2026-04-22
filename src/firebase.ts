@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, onValue, push, remove, set } from 'firebase/database';
+import { getDatabase, ref, onValue, push, remove, set, get } from 'firebase/database';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -15,6 +15,7 @@ const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
 
 export const bookingsRef = ref(db, 'bookings');
+export const settingsRef = ref(db, 'settings');
 
 export const addBookingToFirebase = async (booking: Omit<Booking, 'id'>) => {
   const newRef = push(bookingsRef);
@@ -39,6 +40,22 @@ export const subscribeToBookings = (callback: (bookings: Booking[]) => void) => 
     } else {
       callback([]);
     }
+  });
+};
+
+// ==================== НОВОЕ: Работа с настройками ====================
+export const getNotificationEmails = async (): Promise<string> => {
+  const snapshot = await get(ref(db, 'settings/notificationEmails'));
+  return snapshot.val() || '';
+};
+
+export const setNotificationEmails = async (emails: string): Promise<void> => {
+  await set(ref(db, 'settings/notificationEmails'), emails);
+};
+
+export const subscribeToNotificationEmails = (callback: (emails: string) => void) => {
+  return onValue(ref(db, 'settings/notificationEmails'), (snapshot) => {
+    callback(snapshot.val() || '');
   });
 };
 

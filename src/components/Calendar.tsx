@@ -36,15 +36,13 @@ const Calendar: React.FC = () => {
     isSlotAvailable,
     getCurrentUser,
     setCurrentUser,
-    getNotificationEmails,
-    setNotificationEmails,
+    notificationEmails, // теперь общий список из Firebase
   } = useStore();
 
   const [modal, setModal] = useState<{ roomId: string; date: Date } | null>(null);
   const [userName, setUserName] = useState(getCurrentUser());
   const [startTime, setStartTime] = useState(TIME_SLOTS[0]);
   const [duration, setDuration] = useState(60);
-  const [notificationEmails, setNotificationEmailsLocal] = useState(getNotificationEmails());
 
   const dates = Array.from({ length: 7 }, (_, i) => addDays(selectedDate, i));
 
@@ -58,7 +56,6 @@ const Calendar: React.FC = () => {
   const openModal = (roomId: string, date: Date) => {
     setModal({ roomId, date });
     setUserName(getCurrentUser());
-    setNotificationEmailsLocal(getNotificationEmails());
     setStartTime(TIME_SLOTS[0]);
     setDuration(60);
   };
@@ -86,7 +83,6 @@ const Calendar: React.FC = () => {
     }
 
     setCurrentUser(userName.trim());
-    setNotificationEmails(notificationEmails.trim());
 
     await addBooking({
       roomId: modal.roomId,
@@ -96,6 +92,7 @@ const Calendar: React.FC = () => {
       userName: userName.trim(),
     });
 
+    // Отправка email (используем общий список из store)
     const emails = notificationEmails
       .split(',')
       .map(email => email.trim())
@@ -287,19 +284,22 @@ const Calendar: React.FC = () => {
                   </select>
                 </div>
 
+                {/* Поле Email только для чтения (общий список) */}
                 <div>
                   <label className="block text-[#2c4f7f] text-sm mb-2">
-                    Email для уведомлений (через запятую)
+                    Email для уведомлений (общий список)
                   </label>
-                  <input
-                    type="text"
-                    placeholder="admin@вплюсе.pw, manager@вплюсе.pw"
-                    value={notificationEmails}
-                    onChange={e => setNotificationEmailsLocal(e.target.value)}
-                    className="w-full bg-white/60 backdrop-blur-sm border border-[#1a5cff]/20 rounded-2xl px-4 py-3 text-[#0a2a44] placeholder-[#b0c8e0] focus:ring-2 focus:ring-[#1a5cff]/40 outline-none"
-                  />
+                  {notificationEmails ? (
+                    <div className="w-full bg-white/40 backdrop-blur-sm border border-[#1a5cff]/20 rounded-2xl px-4 py-3 text-[#0a2a44] text-sm break-words">
+                      {notificationEmails}
+                    </div>
+                  ) : (
+                    <div className="w-full bg-white/40 backdrop-blur-sm border border-[#1a5cff]/20 rounded-2xl px-4 py-3 text-[#b0c8e0] text-sm">
+                      Список не настроен
+                    </div>
+                  )}
                   <p className="text-[#b0c8e0] text-xs mt-1">
-                    Оставьте пустым, если не нужно отправлять уведомления
+                    Изменить список может только администратор
                   </p>
                 </div>
 
