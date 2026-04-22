@@ -1,7 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import nodemailer from 'nodemailer';
 
-// Создаём транспорт один раз
 const transporter = nodemailer.createTransport({
   host: 'mail.hosting.reg.ru',
   port: 465,
@@ -12,9 +11,31 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Простой in-memory rate limit (сбрасывается при перезапуске функции)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW = 60000; // 1 минута
+const MAX_REQUESTS = 5;
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Rate limiting
+  const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+  if (record) {
+    if (now < record.resetTime) {
+      if (record.count >= MAX_REQUESTS) {
+        return res.status(429).json({ error: 'Too many requests' });
+      }
+      record.count++;
+    } else {
+      rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    }
+  } else {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
   }
 
   const { userName, roomName, date, start, end, recipients } = req.body;
@@ -33,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const subject = `Бронирование: ${roomName} – ${date} ${start}`;
   const textMessage = `Добрый день. Я ${userName} ${actionVerb}${genderEnding} переговорную "${roomName}" на ${date} с ${start} до ${end}.`;
-  
+
   const htmlMessage = `
     <div style="font-family: Arial, sans-serif; max-width: 600px;">
       <h2>Новое бронирование</h2>
