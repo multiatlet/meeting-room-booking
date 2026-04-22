@@ -16,7 +16,7 @@ const VisitorCounter: React.FC = () => {
 
   return (
     <div className="fixed bottom-4 left-4 z-40 glass-card px-4 py-2 text-white text-sm shadow-lg">
-      👥 Уникальных посетителей: <span className="font-bold">{count}</span>
+      👥 Счётчик: <span className="font-bold">{count}</span>
     </div>
   );
 };
