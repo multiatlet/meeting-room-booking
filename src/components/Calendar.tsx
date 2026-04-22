@@ -136,14 +136,12 @@ const Calendar: React.FC = () => {
   const currentUser = getCurrentUser();
 
   return (
-    <div className="overflow-x-auto scrollbar-hide">
+    <div className="overflow-x-auto scrollbar-hide pt-1">
       <div className="grid grid-cols-[200px_repeat(7,1fr)] md:grid-cols-[240px_repeat(7,1fr)] gap-1.5 md:gap-3 min-w-[800px] md:min-w-[900px]">
-        {/* Заголовок "Помещение" — закреплён слева */}
         <div className="sticky left-0 z-10 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-1.5 md:p-3 text-[#b0c8e0] text-[10px] md:text-sm font-medium uppercase tracking-wider shadow-lg">
           Помещение
         </div>
 
-        {/* Даты */}
         {dates.map(date => {
           const isToday = isSameDay(date, new Date());
           return (
@@ -163,10 +161,8 @@ const Calendar: React.FC = () => {
           );
         })}
 
-        {/* Строки комнат */}
         {rooms.map(room => (
           <React.Fragment key={room.id}>
-            {/* Название комнаты — закреплено слева */}
             <div className="sticky left-0 z-10 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-1.5 md:p-3 flex flex-col justify-center min-h-[60px] md:min-h-[90px] shadow-lg">
               <div className="flex items-center gap-1 md:gap-2">
                 <span
@@ -178,7 +174,6 @@ const Calendar: React.FC = () => {
               <span className="text-[#b0c8e0] text-[10px] md:text-xs mt-0.5">{room.capacity} мест</span>
             </div>
 
-            {/* Ячейки дней */}
             {dates.map(date => {
               const cellBookings = getBookingsForCell(room.id, date);
               return (
@@ -231,7 +226,6 @@ const Calendar: React.FC = () => {
         ))}
       </div>
 
-      {/* Модальное окно бронирования */}
       {modal && selectedRoom && (
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
