@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { Email } from 'vercel-email';
+import Email from 'vercel-email';
 
 export const config = {
   runtime: 'edge',

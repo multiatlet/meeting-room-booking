@@ -3,7 +3,6 @@ import { format, addDays, isSameDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import useStore from '../store';
 
-// ==================== ВРЕМЕННЫЕ СЛОТЫ ====================
 const TIME_SLOTS = [
   '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
   '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
@@ -13,7 +12,6 @@ const TIME_SLOTS = [
 
 const DURATION_OPTIONS = [30, 60, 90, 120, 180, 240];
 
-// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
 const add30min = (time: string): string => {
   const [h, m] = time.split(':').map(Number);
   const d = new Date();
@@ -28,7 +26,6 @@ const addMinutesToTime = (time: string, mins: number): string => {
   return format(d, 'HH:mm');
 };
 
-// ==================== КОМПОНЕНТ ====================
 const Calendar: React.FC = () => {
   const {
     rooms,
@@ -38,19 +35,19 @@ const Calendar: React.FC = () => {
     cancelBooking,
     isSlotAvailable,
     getCurrentUser,
-    setCurrentUser
+    setCurrentUser,
+    getNotificationEmails,
+    setNotificationEmails,
   } = useStore();
 
-  // Модальное окно
   const [modal, setModal] = useState<{ roomId: string; date: Date } | null>(null);
   const [userName, setUserName] = useState(getCurrentUser());
   const [startTime, setStartTime] = useState(TIME_SLOTS[0]);
   const [duration, setDuration] = useState(60);
+  const [notificationEmails, setNotificationEmailsLocal] = useState(getNotificationEmails());
 
-  // 7 дней, начиная с selectedDate
   const dates = Array.from({ length: 7 }, (_, i) => addDays(selectedDate, i));
 
-  // Бронирования для ячейки
   const getBookingsForCell = (roomId: string, date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     return bookings
@@ -61,6 +58,7 @@ const Calendar: React.FC = () => {
   const openModal = (roomId: string, date: Date) => {
     setModal({ roomId, date });
     setUserName(getCurrentUser());
+    setNotificationEmailsLocal(getNotificationEmails());
     setStartTime(TIME_SLOTS[0]);
     setDuration(60);
   };
@@ -87,10 +85,9 @@ const Calendar: React.FC = () => {
       return;
     }
 
-    // Сохраняем имя текущего пользователя
     setCurrentUser(userName.trim());
+    setNotificationEmails(notificationEmails.trim());
 
-    // Создаём бронь
     await addBooking({
       roomId: modal.roomId,
       date: dateStr,
@@ -99,21 +96,29 @@ const Calendar: React.FC = () => {
       userName: userName.trim(),
     });
 
-    // Отправляем email (вызов API)
-    try {
-      await fetch('/api/send-booking-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userName: userName.trim(),
-          roomName: rooms.find(r => r.id === modal.roomId)?.name,
-          date: format(modal.date, 'd MMMM yyyy', { locale: ru }),
-          start: startTime,
-          end: endTime,
-        }),
-      });
-    } catch (error) {
-      console.error('Ошибка отправки email:', error);
+    // Отправка email
+    const emails = notificationEmails
+      .split(',')
+      .map(email => email.trim())
+      .filter(email => email.length > 0);
+
+    if (emails.length > 0) {
+      try {
+        await fetch('/api/send-booking-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userName: userName.trim(),
+            roomName: rooms.find(r => r.id === modal.roomId)?.name,
+            date: format(modal.date, 'd MMMM yyyy', { locale: ru }),
+            start: startTime,
+            end: endTime,
+            recipients: emails,
+          }),
+        });
+      } catch (error) {
+        console.error('Ошибка отправки email:', error);
+      }
     }
 
     closeModal();
@@ -125,7 +130,6 @@ const Calendar: React.FC = () => {
     }
   };
 
-  // Доступные начальные слоты (фильтрация по занятости)
   const availableStartSlots = modal
     ? TIME_SLOTS.filter(slot => {
         const dateStr = format(modal.date, 'yyyy-MM-dd');
@@ -136,17 +140,13 @@ const Calendar: React.FC = () => {
   const selectedRoom = modal ? rooms.find(r => r.id === modal.roomId) : null;
   const currentUser = getCurrentUser();
 
-  // ==================== РЕНДЕР ====================
   return (
     <div className="overflow-x-auto scrollbar-hide">
-      {/* ЕДИНЫЙ GRID */}
       <div className="grid grid-cols-[220px_repeat(7,1fr)] gap-3 min-w-[900px]">
-        {/* Пустая ячейка */}
         <div className="p-3 text-[#b0c8e0] text-sm font-medium uppercase tracking-wider">
           Помещение
         </div>
 
-        {/* Заголовки дат */}
         {dates.map(date => {
           const isToday = isSameDay(date, new Date());
           return (
@@ -166,10 +166,8 @@ const Calendar: React.FC = () => {
           );
         })}
 
-        {/* Строки комнат */}
         {rooms.map(room => (
           <React.Fragment key={room.id}>
-            {/* Левая колонка – комната */}
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 flex flex-col justify-center min-h-[90px]">
               <div className="flex items-center gap-2">
                 <span
@@ -181,7 +179,6 @@ const Calendar: React.FC = () => {
               <span className="text-[#b0c8e0] text-xs mt-1">{room.capacity} мест</span>
             </div>
 
-            {/* 7 ячеек */}
             {dates.map(date => {
               const cellBookings = getBookingsForCell(room.id, date);
               return (
@@ -234,27 +231,26 @@ const Calendar: React.FC = () => {
         ))}
       </div>
 
-      {/* Модальное окно */}
       {modal && selectedRoom && (
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={closeModal}
         >
           <div
-            className="bg-white/85 backdrop-blur-xl border border-[#1a5cff]/10 rounded-2xl p-6 w-[420px] max-w-full shadow-xl"
+            className="bg-white/85 backdrop-blur-xl border border-[#1a5cff]/10 rounded-2xl p-6 w-[420px] max-w-full shadow-xl max-h-[90vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
             <h2 className="text-xl font-semibold text-[#0a2a44] mb-1">
               {selectedRoom.name}
             </h2>
-            <p className="text-[#2c4f7f] text-sm mb-6">
+            <p className="text-[#2c4f7f] text-sm mb-4">
               {format(modal.date, 'd MMMM yyyy, EEEE', { locale: ru })}
             </p>
 
             {availableStartSlots.length === 0 ? (
               <p className="text-[#b02b3a] text-center py-4">Нет свободного времени</p>
             ) : (
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <input
                   type="text"
                   placeholder="Ваше имя"
@@ -292,13 +288,29 @@ const Calendar: React.FC = () => {
                   </select>
                 </div>
 
+                <div>
+                  <label className="block text-[#2c4f7f] text-sm mb-2">
+                    Email для уведомлений (через запятую)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="admin@вплюсе.pw, manager@вплюсе.pw"
+                    value={notificationEmails}
+                    onChange={e => setNotificationEmailsLocal(e.target.value)}
+                    className="w-full bg-white/60 backdrop-blur-sm border border-[#1a5cff]/20 rounded-2xl px-4 py-3 text-[#0a2a44] placeholder-[#b0c8e0] focus:ring-2 focus:ring-[#1a5cff]/40 outline-none"
+                  />
+                  <p className="text-[#b0c8e0] text-xs mt-1">
+                    Оставьте пустым, если не нужно отправлять уведомления
+                  </p>
+                </div>
+
                 <div className="bg-white/40 backdrop-blur-sm rounded-2xl p-3 text-sm text-[#2c4f7f]">
                   🕒 {startTime} – {addMinutesToTime(startTime, duration)}
                 </div>
               </div>
             )}
 
-            <div className="flex gap-3 mt-8">
+            <div className="flex gap-3 mt-6">
               <button
                 onClick={closeModal}
                 className="flex-1 py-3 rounded-2xl bg-white/60 border border-[#1a5cff]/20 text-[#0a2a44] font-medium hover:bg-white/80 transition"
