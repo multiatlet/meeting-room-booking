@@ -137,9 +137,9 @@ const Calendar: React.FC = () => {
 
   return (
     <div className="overflow-x-auto scrollbar-hide">
-      <div className="grid grid-cols-[260px_repeat(7,1fr)] gap-2 md:gap-3 min-w-[900px]">
-        {/* Заголовок "Помещение" — закреплён слева, с обрамлением */}
-        <div className="sticky left-0 z-10 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 md:p-3 text-[#b0c8e0] text-xs md:text-sm font-medium uppercase tracking-wider shadow-lg">
+      <div className="grid grid-cols-[200px_repeat(7,1fr)] md:grid-cols-[240px_repeat(7,1fr)] gap-1.5 md:gap-3 min-w-[800px] md:min-w-[900px]">
+        {/* Заголовок "Помещение" — закреплён слева */}
+        <div className="sticky left-0 z-10 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-1.5 md:p-3 text-[#b0c8e0] text-[10px] md:text-sm font-medium uppercase tracking-wider shadow-lg">
           Помещение
         </div>
 
@@ -149,7 +149,7 @@ const Calendar: React.FC = () => {
           return (
             <div
               key={date.toISOString()}
-              className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 md:p-3 text-center transition-all shadow-lg ${
+              className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-1.5 md:p-3 text-center transition-all shadow-lg ${
                 isToday ? 'ring-2 ring-[#1a5cff]/50 shadow-[0_0_10px_rgba(26,92,255,0.3)]' : ''
               }`}
             >
@@ -166,16 +166,16 @@ const Calendar: React.FC = () => {
         {/* Строки комнат */}
         {rooms.map(room => (
           <React.Fragment key={room.id}>
-            {/* Название комнаты — закреплено слева, с обрамлением как у ячеек */}
-            <div className="sticky left-0 z-10 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 md:p-3 flex flex-col justify-center min-h-[70px] md:min-h-[90px] shadow-lg">
+            {/* Название комнаты — закреплено слева */}
+            <div className="sticky left-0 z-10 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-1.5 md:p-3 flex flex-col justify-center min-h-[60px] md:min-h-[90px] shadow-lg">
               <div className="flex items-center gap-1 md:gap-2">
                 <span
                   className="w-2 h-2 md:w-3 md:h-3 rounded-full shadow-[0_0_6px_currentColor]"
                   style={{ backgroundColor: room.color, color: room.color }}
                 />
-                <span className="text-white font-medium break-words text-xs md:text-sm">{room.name}</span>
+                <span className="text-white font-medium break-words text-[11px] md:text-sm leading-tight">{room.name}</span>
               </div>
-              <span className="text-[#b0c8e0] text-[10px] md:text-xs mt-0.5 md:mt-1">{room.capacity} мест</span>
+              <span className="text-[#b0c8e0] text-[10px] md:text-xs mt-0.5">{room.capacity} мест</span>
             </div>
 
             {/* Ячейки дней */}
@@ -184,7 +184,7 @@ const Calendar: React.FC = () => {
               return (
                 <div
                   key={date.toISOString()}
-                  className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 md:p-3 min-h-[70px] md:min-h-[90px] flex flex-col shadow-lg"
+                  className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-1.5 md:p-3 min-h-[60px] md:min-h-[90px] flex flex-col shadow-lg"
                 >
                   <button
                     onClick={() => openModal(room.id, date)}
@@ -192,14 +192,14 @@ const Calendar: React.FC = () => {
                   >
                     {cellBookings.length === 0 ? (
                       <div className="flex items-center justify-center h-full">
-                        <span className="text-[#b0c8e0] text-xs md:text-sm">Свободно</span>
+                        <span className="text-[#b0c8e0] text-[10px] md:text-sm">Свободно</span>
                       </div>
                     ) : (
-                      <div className="space-y-0.5 md:space-y-1">
+                      <div className="space-y-0.5">
                         {cellBookings.slice(0, 3).map(b => (
                           <div key={b.id} className="text-[10px] md:text-xs flex items-start justify-between">
                             <div className="flex-1 min-w-0">
-                              <div className="text-white font-medium break-words">
+                              <div className="text-white font-medium break-words leading-tight">
                                 {b.userName}
                               </div>
                               <div className="text-[#b0c8e0]">{b.start}–{b.end}</div>
@@ -210,7 +210,7 @@ const Calendar: React.FC = () => {
                                   e.stopPropagation();
                                   handleDelete(b.id);
                                 }}
-                                className="ml-1 text-[#b02b3a] hover:text-red-400 text-base md:text-lg leading-none"
+                                className="ml-1 text-[#b02b3a] hover:text-red-400 text-sm md:text-lg leading-none"
                                 title="Удалить"
                               >
                                 ×
@@ -231,7 +231,7 @@ const Calendar: React.FC = () => {
         ))}
       </div>
 
-      {/* Модальное окно бронирования (адаптировано под мобильные) */}
+      {/* Модальное окно бронирования */}
       {modal && selectedRoom && (
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
