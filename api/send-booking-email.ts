@@ -1,9 +1,16 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import Email from 'vercel-email';
+import nodemailer from 'nodemailer';
 
-export const config = {
-  runtime: 'edge',
-};
+// Создаём транспорт один раз
+const transporter = nodemailer.createTransport({
+  host: 'mail.hosting.reg.ru',
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASSWORD,
+  },
+});
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -38,13 +45,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     </div>
   `;
 
-  const fromAddress = process.env.EMAIL_FROM || `booking@${process.env.VERCEL_URL || 'example.com'}`;
+  const fromAddress = process.env.EMAIL_FROM || 'we@vpluse.ru';
 
   try {
     const sendPromises = recipients.map((recipient: string) =>
-      Email.send({
-        to: recipient,
+      transporter.sendMail({
         from: fromAddress,
+        to: recipient,
         subject,
         text: textMessage,
         html: htmlMessage,
