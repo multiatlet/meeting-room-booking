@@ -96,7 +96,6 @@ const Calendar: React.FC = () => {
       userName: userName.trim(),
     });
 
-    // Отправка email
     const emails = notificationEmails
       .split(',')
       .map(email => email.trim())
@@ -142,7 +141,7 @@ const Calendar: React.FC = () => {
 
   return (
     <div className="overflow-x-auto scrollbar-hide">
-      <div className="grid grid-cols-[220px_repeat(7,1fr)] gap-3 min-w-[900px]">
+      <div className="grid grid-cols-[260px_repeat(7,1fr)] gap-3 min-w-[900px]">
         <div className="p-3 text-[#b0c8e0] text-sm font-medium uppercase tracking-wider">
           Помещение
         </div>
@@ -174,7 +173,7 @@ const Calendar: React.FC = () => {
                   className="w-3 h-3 rounded-full shadow-[0_0_6px_currentColor]"
                   style={{ backgroundColor: room.color, color: room.color }}
                 />
-                <span className="text-white font-medium truncate">{room.name}</span>
+                <span className="text-white font-medium break-words">{room.name}</span>
               </div>
               <span className="text-[#b0c8e0] text-xs mt-1">{room.capacity} мест</span>
             </div>
@@ -199,7 +198,7 @@ const Calendar: React.FC = () => {
                         {cellBookings.slice(0, 3).map(b => (
                           <div key={b.id} className="text-xs flex items-start justify-between">
                             <div className="flex-1 min-w-0">
-                              <div className="text-white font-medium truncate">
+                              <div className="text-white font-medium break-words">
                                 {b.userName}
                               </div>
                               <div className="text-[#b0c8e0]">{b.start}–{b.end}</div>
