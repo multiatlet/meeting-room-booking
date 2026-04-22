@@ -44,16 +44,25 @@ export const subscribeToBookings = (callback: (bookings: Booking[]) => void) => 
 };
 
 // ==================== АНАЛИТИКА ====================
+export const logEvent = async (type: 'booking_created' | 'booking_deleted' | 'slot_viewed', metadata?: any) => {
+  const userId = localStorage.getItem('visitor_id') || 'anonymous';
+  const eventsRef = ref(db, 'analytics/events');
+  await push(eventsRef, {
+    type,
+    userId,
+    timestamp: Date.now(),
+    ...metadata,
+  });
+};
+
 export const trackUniqueVisitor = async (userId: string) => {
   const visitorRef = ref(db, `analytics/unique_visitors/${userId}`);
   const snapshot = await get(visitorRef);
   const now = Date.now();
 
   if (snapshot.exists()) {
-    // Обновляем только last_seen
     await update(visitorRef, { last_seen: now });
   } else {
-    // Новый посетитель
     await set(visitorRef, {
       first_seen: now,
       last_seen: now,
@@ -70,7 +79,7 @@ export const subscribeToUniqueVisitorsCount = (callback: (count: number) => void
   });
 };
 
-// ==================== НАСТРОЙКИ (EMAIL) ====================
+// ==================== НАСТРОЙКИ ====================
 export const getNotificationEmails = async (): Promise<string> => {
   const snapshot = await get(ref(db, 'settings/notificationEmails'));
   return snapshot.val() || '';

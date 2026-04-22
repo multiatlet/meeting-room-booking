@@ -5,6 +5,7 @@ import {
   deleteBookingFromFirebase,
   subscribeToNotificationEmails,
   setNotificationEmails as setFirebaseNotificationEmails,
+  logEvent,
 } from './firebase';
 import type { Booking } from './firebase';
 
@@ -41,6 +42,29 @@ export const createDateTime = (dateStr: string, timeStr: string): Date => {
 
 const STORAGE_USER_KEY = 'booking_user_name';
 
+const validateBooking = (booking: Omit<Booking, 'id'>, existingBookings: Booking[]): string | null => {
+  if (!booking.userName || booking.userName.trim().length === 0) {
+    return 'Имя пользователя обязательно';
+  }
+  if (!booking.roomId || !booking.date || !booking.start || !booking.end) {
+    return 'Все поля обязательны';
+  }
+  const start = createDateTime(booking.date, booking.start);
+  const end = createDateTime(booking.date, booking.end);
+  if (end <= start) {
+    return 'Время окончания должно быть позже начала';
+  }
+  for (const b of existingBookings) {
+    if (b.roomId !== booking.roomId || b.date !== booking.date) continue;
+    const bStart = createDateTime(b.date, b.start);
+    const bEnd = createDateTime(b.date, b.end);
+    if (start < bEnd && end > bStart) {
+      return 'Время пересекается с существующей бронью';
+    }
+  }
+  return null;
+};
+
 const useStore = create<AppState>((set, get) => ({
   rooms: [
     { id: 'small-1', name: 'Малая переговорная 1', type: 'small', capacity: 2, color: '#10b981' },
@@ -64,14 +88,16 @@ const useStore = create<AppState>((set, get) => ({
   setSelectedDate: (date) => set({ selectedDate: date }),
 
   addBooking: async (booking) => {
-    const { isSlotAvailable } = get();
-    if (!isSlotAvailable(booking.roomId, booking.date, booking.start, booking.end)) {
-      alert('Этот слот уже занят');
+    const { bookings } = get();
+    const error = validateBooking(booking, bookings);
+    if (error) {
+      alert(error);
       return;
     }
     try {
       await addBookingToFirebase(booking);
       localStorage.setItem(STORAGE_USER_KEY, booking.userName);
+      await logEvent('booking_created', { roomId: booking.roomId, date: booking.date, start: booking.start });
       alert('✅ Комната забронирована!');
     } catch (error) {
       console.error('Ошибка при добавлении брони:', error);
@@ -89,6 +115,7 @@ const useStore = create<AppState>((set, get) => ({
     }
     try {
       await deleteBookingFromFirebase(bookingId);
+      await logEvent('booking_deleted', { roomId: booking.roomId, date: booking.date });
       alert('🗑️ Бронь отменена');
       return true;
     } catch (error) {
