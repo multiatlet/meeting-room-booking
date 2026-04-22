@@ -5,7 +5,37 @@ import Calendar from './components/Calendar';
 import VisitorCounter from './components/VisitorCounter';
 import { trackUniqueVisitor } from './firebase';
 
-// ... хук useTimeOfDayGradient остаётся прежним
+// Хук для динамического градиента по времени суток
+const useTimeOfDayGradient = () => {
+  const getGradientForHour = (hour: number): string => {
+    if (hour >= 6 && hour < 12) {
+      return 'from-[#7ec8ff] via-[#5ba3e6] to-[#2d3a52]';
+    }
+    if (hour >= 12 && hour < 18) {
+      return 'from-[#3b82f6] via-[#2563eb] to-[#1e293b]';
+    }
+    if (hour >= 18 && hour < 24) {
+      return 'from-[#1e3a8a] via-[#152c5e] to-[#0f172a]';
+    }
+    return 'from-[#0f172a] via-[#1e293b] to-[#020617]';
+  };
+
+  const [gradient, setGradient] = useState(() => getGradientForHour(new Date().getHours()));
+
+  useEffect(() => {
+    const updateGradient = () => {
+      const hour = new Date().getHours();
+      setGradient(getGradientForHour(hour));
+    };
+
+    updateGradient(); // сразу при монтировании
+    const interval = setInterval(updateGradient, 60000); // каждую минуту
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return gradient;
+};
 
 const App: React.FC = () => {
   const { initializeFirebaseSync } = useStore();
