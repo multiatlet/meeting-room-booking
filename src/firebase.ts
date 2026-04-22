@@ -102,4 +102,6 @@ export interface Booking {
   start: string;
   end: string;
   userName: string;
+  topic?: string;
+  videoMeetingLink?: string;
 }
