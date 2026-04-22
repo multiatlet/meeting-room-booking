@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, onValue, push, remove, set, get, update, serverTimestamp } from 'firebase/database';
+import { getDatabase, ref, onValue, push, remove, set, get, update } from 'firebase/database';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -16,9 +16,7 @@ export const db = getDatabase(app);
 
 export const bookingsRef = ref(db, 'bookings');
 export const settingsRef = ref(db, 'settings');
-export const visitorsRef = ref(db, 'visitors'); // для хранения уникальных посетителей
 
-// ---------- Бронирования ----------
 export const addBookingToFirebase = async (booking: Omit<Booking, 'id'>) => {
   const newRef = push(bookingsRef);
   await set(newRef, booking);
@@ -45,7 +43,34 @@ export const subscribeToBookings = (callback: (bookings: Booking[]) => void) => 
   });
 };
 
-// ---------- Настройки уведомлений ----------
+// ==================== АНАЛИТИКА ====================
+export const trackUniqueVisitor = async (userId: string) => {
+  const visitorRef = ref(db, `analytics/unique_visitors/${userId}`);
+  const snapshot = await get(visitorRef);
+  const now = Date.now();
+
+  if (snapshot.exists()) {
+    // Обновляем только last_seen
+    await update(visitorRef, { last_seen: now });
+  } else {
+    // Новый посетитель
+    await set(visitorRef, {
+      first_seen: now,
+      last_seen: now,
+    });
+  }
+};
+
+export const subscribeToUniqueVisitorsCount = (callback: (count: number) => void) => {
+  const visitorsRef = ref(db, 'analytics/unique_visitors');
+  return onValue(visitorsRef, (snapshot) => {
+    const data = snapshot.val();
+    const count = data ? Object.keys(data).length : 0;
+    callback(count);
+  });
+};
+
+// ==================== НАСТРОЙКИ (EMAIL) ====================
 export const getNotificationEmails = async (): Promise<string> => {
   const snapshot = await get(ref(db, 'settings/notificationEmails'));
   return snapshot.val() || '';
@@ -58,46 +83,6 @@ export const setNotificationEmails = async (emails: string): Promise<void> => {
 export const subscribeToNotificationEmails = (callback: (emails: string) => void) => {
   return onValue(ref(db, 'settings/notificationEmails'), (snapshot) => {
     callback(snapshot.val() || '');
-  });
-};
-
-// ---------- Счётчик уникальных посетителей ----------
-// Генерируем fingerprint на основе браузера + экрана (достаточно для уникальности)
-const generateVisitorId = (): string => {
-  const nav = window.navigator;
-  const screen = window.screen;
-  const str = `${nav.userAgent}|${nav.language}|${screen.width}x${screen.height}|${screen.colorDepth}|${new Date().getTimezoneOffset()}`;
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash).toString(16);
-};
-
-// Регистрируем посетителя, если его ещё нет в базе, и возвращаем общее количество
-export const registerVisitor = async (): Promise<number> => {
-  const visitorId = generateVisitorId();
-  const visitorRef = ref(db, `visitors/${visitorId}`);
-  const snapshot = await get(visitorRef);
-  if (!snapshot.exists()) {
-    await set(visitorRef, {
-      firstVisit: serverTimestamp(),
-      lastVisit: serverTimestamp(),
-    });
-  } else {
-    await update(visitorRef, { lastVisit: serverTimestamp() });
-  }
-  // Получаем общее количество
-  const allVisitorsSnapshot = await get(visitorsRef);
-  return allVisitorsSnapshot.size; // количество ключей
-};
-
-// Подписка на изменение количества уникальных посетителей
-export const subscribeToVisitorCount = (callback: (count: number) => void) => {
-  return onValue(visitorsRef, (snapshot) => {
-    callback(snapshot.size);
   });
 };
 
