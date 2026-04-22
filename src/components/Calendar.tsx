@@ -44,6 +44,9 @@ const Calendar: React.FC = () => {
   const [userName, setUserName] = useState(getCurrentUser());
   const [startTime, setStartTime] = useState(TIME_SLOTS[0]);
   const [duration, setDuration] = useState(60);
+  const [topic, setTopic] = useState('');
+  const [createVideoMeeting, setCreateVideoMeeting] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
 
   const dates = Array.from({ length: 7 }, (_, i) => addDays(selectedDate, i));
 
@@ -59,10 +62,36 @@ const Calendar: React.FC = () => {
     setUserName(getCurrentUser());
     setStartTime(TIME_SLOTS[0]);
     setDuration(60);
+    setTopic('');
+    setCreateVideoMeeting(false);
+    setGeneratedLink(null);
     logEvent('slot_viewed', { roomId, date: format(date, 'yyyy-MM-dd') });
   };
 
   const closeModal = () => setModal(null);
+
+  const generateMeetingLink = () => {
+    if (!modal) return '';
+    const room = rooms.find(r => r.id === modal.roomId);
+    const base = `${room?.name || 'room'}-${format(modal.date, 'yyyy-MM-dd')}-${startTime}`;
+    const meetingId = base.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+    return `https://meet.jit.si/${meetingId}`;
+  };
+
+  const handleCreateVideoChange = (checked: boolean) => {
+    setCreateVideoMeeting(checked);
+    if (checked) {
+      const link = generateMeetingLink();
+      setGeneratedLink(link);
+    } else {
+      setGeneratedLink(null);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    alert('Ссылка скопирована!');
+  };
 
   const handleSave = async () => {
     if (!modal) return;
@@ -86,12 +115,16 @@ const Calendar: React.FC = () => {
 
     setCurrentUser(userName.trim());
 
+    const finalVideoLink = createVideoMeeting ? generatedLink : undefined;
+
     await addBooking({
       roomId: modal.roomId,
       date: dateStr,
       start: startTime,
       end: endTime,
       userName: userName.trim(),
+      topic: topic.trim() || undefined,
+      videoMeetingLink: finalVideoLink || undefined,
     });
 
     const emails = notificationEmails
@@ -110,6 +143,8 @@ const Calendar: React.FC = () => {
             date: format(modal.date, 'd MMMM yyyy', { locale: ru }),
             start: startTime,
             end: endTime,
+            topic: topic.trim() || undefined,
+            videoMeetingLink: finalVideoLink,
             recipients: emails,
           }),
         });
@@ -140,12 +175,10 @@ const Calendar: React.FC = () => {
   return (
     <div className="overflow-x-auto scrollbar-hide pt-1">
       <div className="grid grid-cols-[200px_repeat(7,1fr)] md:grid-cols-[240px_repeat(7,1fr)] gap-2 md:gap-3 min-w-[800px] md:min-w-[900px]">
-        {/* Заголовок "Помещение" */}
         <div className="sticky left-0 z-10 glass-card p-2 md:p-3 text-[#9CA3AF] text-[10px] md:text-sm font-medium uppercase tracking-wider">
           Помещение
         </div>
 
-        {/* Даты */}
         {dates.map(date => {
           const isToday = isSameDay(date, new Date());
           const dayOfWeek = date.getDay();
@@ -167,7 +200,6 @@ const Calendar: React.FC = () => {
           );
         })}
 
-        {/* Комнаты и ячейки */}
         {rooms.map(room => (
           <React.Fragment key={room.id}>
             <div className="sticky left-0 z-10 glass-card p-2 md:p-3 flex flex-col justify-center min-h-[70px] md:min-h-[90px]">
@@ -202,15 +234,24 @@ const Calendar: React.FC = () => {
                         <span className="text-emerald-200/90 text-xs md:text-sm font-medium">Свободно</span>
                       </div>
                     ) : (
-                      <div className="space-y-0.5">
+                      <div className="space-y-1">
                         {cellBookings.slice(0, 3).map(b => (
-                          <div key={b.id} className="text-[10px] md:text-xs flex items-start justify-between">
-                            <div className="flex-1 min-w-0">
-                              <div className="text-[#F9FAFB] font-medium break-words leading-tight">
-                                {b.userName}
-                              </div>
-                              <div className="text-rose-200/80">{b.start}–{b.end}</div>
+                          <div key={b.id} className="text-[10px] md:text-xs">
+                            <div className="text-white font-medium break-words">
+                              {b.topic || b.userName}
                             </div>
+                            <div className="text-rose-200/80">{b.start}–{b.end}</div>
+                            {b.videoMeetingLink && (
+                              <a
+                                href={b.videoMeetingLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 hover:text-blue-300 underline break-all"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                ▶️ Видео
+                              </a>
+                            )}
                             {b.userName === currentUser && (
                               <button
                                 onClick={(e) => {
@@ -245,13 +286,13 @@ const Calendar: React.FC = () => {
           onClick={closeModal}
         >
           <div
-            className="glass-panel p-5 md:p-7 w-full max-w-[440px] shadow-2xl scale-100 transition-all duration-300"
+            className="glass-panel p-5 md:p-7 w-full max-w-[440px] shadow-2xl scale-100 transition-all duration-300 max-h-[90vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
             <h2 className="text-xl md:text-2xl font-bold text-[#0B1220] mb-1 tracking-tight">
               {selectedRoom.name}
             </h2>
-            <p className="text-[#374151] text-sm md:text-base mb-6">
+            <p className="text-[#374151] text-sm md:text-base mb-4">
               {format(modal.date, 'd MMMM yyyy, EEEE', { locale: ru })}
             </p>
 
@@ -266,6 +307,14 @@ const Calendar: React.FC = () => {
                   onChange={e => setUserName(e.target.value)}
                   className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-[#0B1220] placeholder-[#9CA3AF] focus:ring-2 focus:ring-[#3B82F6]/40 outline-none transition-all"
                   autoFocus
+                />
+
+                <input
+                  type="text"
+                  placeholder="Тема встречи (необязательно)"
+                  value={topic}
+                  onChange={e => setTopic(e.target.value)}
+                  className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-[#0B1220] placeholder-[#9CA3AF] focus:ring-2 focus:ring-[#3B82F6]/40 outline-none transition-all"
                 />
 
                 <div>
@@ -298,6 +347,34 @@ const Calendar: React.FC = () => {
 
                 <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-3 text-sm text-[#374151]">
                   🕒 {startTime} – {addMinutesToTime(startTime, duration)}
+                </div>
+
+                {/* Блок видеосвязи */}
+                <div className="border-t border-[#3B82F6]/20 pt-4">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={createVideoMeeting}
+                      onChange={(e) => handleCreateVideoChange(e.target.checked)}
+                      className="w-4 h-4 text-[#3B82F6] bg-gray-100 border-gray-300 rounded focus:ring-[#3B82F6]"
+                    />
+                    <span className="text-sm font-medium text-[#0B1220]">Создать видео-встречу (Jitsi)</span>
+                  </label>
+
+                  {generatedLink && (
+                    <div className="mt-3 p-3 bg-white/40 rounded-xl border border-[#3B82F6]/20">
+                      <p className="text-xs text-[#374151] mb-1">Ссылка для приглашения:</p>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 text-xs bg-black/10 p-2 rounded break-all">{generatedLink}</code>
+                        <button
+                          onClick={() => copyToClipboard(generatedLink)}
+                          className="px-3 py-2 bg-[#3B82F6] text-white text-xs rounded-lg hover:bg-[#2563EB] transition"
+                        >
+                          Копировать
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

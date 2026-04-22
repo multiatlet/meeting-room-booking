@@ -18,6 +18,10 @@ const Header: React.FC = () => {
     setShowSettings(false);
   };
 
+  const goToToday = () => {
+    setSelectedDate(new Date());
+  };
+
   return (
     <>
       <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -40,6 +44,14 @@ const Header: React.FC = () => {
             className="w-10 h-10 rounded-full glass-card flex items-center justify-center text-[#D1D5DB] hover:text-white hover:bg-white/10 transition"
           >
             →
+          </button>
+
+          <button
+            onClick={goToToday}
+            className="px-3 py-1.5 rounded-full glass-card text-[#D1D5DB] text-sm hover:text-white hover:bg-white/10 transition"
+            title="Вернуться к сегодняшней дате"
+          >
+            Сегодня
           </button>
 
           {isAdmin && (
