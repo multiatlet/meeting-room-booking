@@ -9,23 +9,33 @@
 }
 
 @layer components {
+  /* Премиальные стеклянные карточки */
   .glass-card {
-    @apply bg-white/5 backdrop-blur-2xl border border-white/5 rounded-2xl shadow-xl transition-all duration-300;
+    @apply bg-white/6 backdrop-blur-xl border border-white/8 rounded-2xl shadow-lg transition-all duration-300;
   }
+
+  /* Интерактивная карточка с мягким подъёмом */
   .glass-card-interactive {
-    @apply glass-card hover:bg-white/10 hover:border-white/10 hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-0.5;
+    @apply glass-card hover:bg-white/10 hover:border-white/15 hover:shadow-xl hover:scale-[1.01] hover:-translate-y-0.5;
   }
+
+  /* Панель для модальных окон */
   .glass-panel {
     @apply bg-white/90 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl;
   }
+
+  /* Статус "Свободно" — мягкий зелёный оттенок */
   .status-free {
-    @apply bg-emerald-500/10 text-emerald-300 border-emerald-500/20;
+    @apply bg-emerald-500/5 text-emerald-200/90 border-emerald-500/10;
   }
+
+  /* Статус "Занято" — приглушённый красный */
   .status-occupied {
-    @apply bg-rose-500/10 text-rose-300 border-rose-500/20;
+    @apply bg-rose-500/5 text-rose-200/90 border-rose-500/10;
   }
 }
 
+/* Скрытие скроллбара */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
