@@ -1,28 +1,29 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import Email from 'vercel-email';
+import { Email } from 'vercel-email';
 
 export const config = {
-  runtime: 'edge', // обязательно для работы vercel-email
+  runtime: 'edge',
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Разрешаем только POST-запросы
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { userName, roomName, date, start, end } = req.body;
+  const { userName, roomName, date, start, end, recipients } = req.body;
 
   if (!userName || !roomName || !date || !start || !end) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  // Определяем пол и склонение
+  if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
+    return res.status(400).json({ error: 'No recipients provided' });
+  }
+
   const isFemale = /[ая]$/i.test(userName.trim());
   const actionVerb = isFemale ? 'забронировала' : 'забронировал';
   const genderEnding = isFemale ? 'а' : '';
 
-  // Тема и тексты письма
   const subject = `Бронирование: ${roomName} – ${date} ${start}`;
   const textMessage = `Добрый день. Я ${userName} ${actionVerb}${genderEnding} переговорную "${roomName}" на ${date} с ${start} до ${end}.`;
   
@@ -37,17 +38,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     </div>
   `;
 
-  try {
-    await Email.send({
-      to: process.env.EMAIL_TO!,
-      from: process.env.EMAIL_FROM!,
-      subject: subject,
-      text: textMessage,
-      html: htmlMessage,
-    });
+  const fromAddress = process.env.EMAIL_FROM || `booking@${process.env.VERCEL_URL || 'example.com'}`;
 
-    console.log(`✅ Email sent to ${process.env.EMAIL_TO}`);
-    res.status(200).json({ success: true });
+  try {
+    const sendPromises = recipients.map((recipient: string) =>
+      Email.send({
+        to: recipient,
+        from: fromAddress,
+        subject,
+        text: textMessage,
+        html: htmlMessage,
+      })
+    );
+
+    await Promise.all(sendPromises);
+
+    console.log(`✅ Emails sent to ${recipients.join(', ')}`);
+    res.status(200).json({ success: true, recipients });
   } catch (error) {
     console.error('❌ Email sending error:', error);
     res.status(500).json({ error: 'Failed to send email' });
