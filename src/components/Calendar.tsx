@@ -45,7 +45,6 @@ const Calendar: React.FC = () => {
   const [startTime, setStartTime] = useState(TIME_SLOTS[0]);
   const [duration, setDuration] = useState(60);
   const [topic, setTopic] = useState('');
-  const [createVideoMeeting, setCreateVideoMeeting] = useState(false);
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
 
   const dates = Array.from({ length: 7 }, (_, i) => addDays(selectedDate, i));
@@ -63,7 +62,6 @@ const Calendar: React.FC = () => {
     setStartTime(TIME_SLOTS[0]);
     setDuration(60);
     setTopic('');
-    setCreateVideoMeeting(false);
     setGeneratedLink(null);
     logEvent('slot_viewed', { roomId, date: format(date, 'yyyy-MM-dd') });
   };
@@ -73,19 +71,9 @@ const Calendar: React.FC = () => {
   const generateMeetingLink = () => {
     if (!modal) return '';
     const room = rooms.find(r => r.id === modal.roomId);
-    const base = `${room?.name || 'room'}-${format(modal.date, 'yyyy-MM-dd')}-${startTime}`;
+    const base = `${room?.name || 'meeting'}-${format(modal.date, 'yyyy-MM-dd')}-${startTime}`;
     const meetingId = base.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
     return `https://meet.jit.si/${meetingId}`;
-  };
-
-  const handleCreateVideoChange = (checked: boolean) => {
-    setCreateVideoMeeting(checked);
-    if (checked) {
-      const link = generateMeetingLink();
-      setGeneratedLink(link);
-    } else {
-      setGeneratedLink(null);
-    }
   };
 
   const copyToClipboard = (text: string) => {
@@ -115,7 +103,8 @@ const Calendar: React.FC = () => {
 
     setCurrentUser(userName.trim());
 
-    const finalVideoLink = createVideoMeeting ? generatedLink : undefined;
+    const isVirtual = modal.roomId === 'virtual-video';
+    const finalVideoLink = isVirtual ? generateMeetingLink() : undefined;
 
     await addBooking({
       roomId: modal.roomId,
@@ -124,7 +113,7 @@ const Calendar: React.FC = () => {
       end: endTime,
       userName: userName.trim(),
       topic: topic.trim() || undefined,
-      videoMeetingLink: finalVideoLink || undefined,
+      videoMeetingLink: finalVideoLink,
     });
 
     const emails = notificationEmails
@@ -279,7 +268,6 @@ const Calendar: React.FC = () => {
         ))}
       </div>
 
-      {/* Модальное окно */}
       {modal && selectedRoom && (
         <div
           className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300"
@@ -349,33 +337,22 @@ const Calendar: React.FC = () => {
                   🕒 {startTime} – {addMinutesToTime(startTime, duration)}
                 </div>
 
-                {/* Блок видеосвязи */}
-                <div className="border-t border-[#3B82F6]/20 pt-4">
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={createVideoMeeting}
-                      onChange={(e) => handleCreateVideoChange(e.target.checked)}
-                      className="w-4 h-4 text-[#3B82F6] bg-gray-100 border-gray-300 rounded focus:ring-[#3B82F6]"
-                    />
-                    <span className="text-sm font-medium text-[#0B1220]">Создать видео-встречу (Jitsi)</span>
-                  </label>
-
-                  {generatedLink && (
-                    <div className="mt-3 p-3 bg-white/40 rounded-xl border border-[#3B82F6]/20">
-                      <p className="text-xs text-[#374151] mb-1">Ссылка для приглашения:</p>
-                      <div className="flex items-center gap-2">
-                        <code className="flex-1 text-xs bg-black/10 p-2 rounded break-all">{generatedLink}</code>
-                        <button
-                          onClick={() => copyToClipboard(generatedLink)}
-                          className="px-3 py-2 bg-[#3B82F6] text-white text-xs rounded-lg hover:bg-[#2563EB] transition"
-                        >
-                          Копировать
-                        </button>
-                      </div>
+                {selectedRoom.id === 'virtual-video' && (
+                  <div className="border-t border-[#3B82F6]/20 pt-4">
+                    <p className="text-sm font-medium text-[#0B1220] mb-2">Ссылка на видеовстречу:</p>
+                    <div className="p-3 bg-white/40 rounded-xl border border-[#3B82F6]/20">
+                      <code className="block text-xs bg-black/10 p-2 rounded break-all mb-2">
+                        {generateMeetingLink()}
+                      </code>
+                      <button
+                        onClick={() => copyToClipboard(generateMeetingLink())}
+                        className="w-full py-2 bg-[#3B82F6] text-white text-sm rounded-lg hover:bg-[#2563EB] transition"
+                      >
+                        Копировать ссылку
+                      </button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )}
 

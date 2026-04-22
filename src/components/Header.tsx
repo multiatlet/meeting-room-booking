@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { format, addDays } from 'date-fns';
+import { format, addDays, isSameDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import useStore from '../store';
 
@@ -21,6 +21,8 @@ const Header: React.FC = () => {
   const goToToday = () => {
     setSelectedDate(new Date());
   };
+
+  const isTodayVisible = isSameDay(selectedDate, new Date());
 
   return (
     <>
@@ -46,13 +48,15 @@ const Header: React.FC = () => {
             →
           </button>
 
-          <button
-            onClick={goToToday}
-            className="px-3 py-1.5 rounded-full glass-card text-[#D1D5DB] text-sm hover:text-white hover:bg-white/10 transition"
-            title="Вернуться к сегодняшней дате"
-          >
-            Сегодня
-          </button>
+          {!isTodayVisible && (
+            <button
+              onClick={goToToday}
+              className="px-3 py-1.5 rounded-full glass-card text-[#D1D5DB] text-sm hover:text-white hover:bg-white/10 transition"
+              title="Вернуться к сегодняшней дате"
+            >
+              Сегодня
+            </button>
+          )}
 
           {isAdmin && (
             <button
