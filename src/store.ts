@@ -43,10 +43,10 @@ const STORAGE_USER_KEY = 'booking_user_name';
 
 const useStore = create<AppState>((set, get) => ({
   rooms: [
-    { id: 'conf-1', name: 'Конференц-зал', type: 'conference', capacity: 30, color: '#3b82f6' },
-    { id: 'large-1', name: 'Большая переговорная 3', type: 'large', capacity: 15, color: '#8b5cf6' },
     { id: 'small-1', name: 'Малая переговорная 1', type: 'small', capacity: 2, color: '#10b981' },
     { id: 'small-2', name: 'Малая переговорная 2', type: 'small', capacity: 2, color: '#f59e0b' },
+    { id: 'large-1', name: 'Большая переговорная 3', type: 'large', capacity: 15, color: '#8b5cf6' },
+    { id: 'conf-1', name: 'Конференц-зал', type: 'conference', capacity: 30, color: '#3b82f6' },
   ],
   bookings: [],
   selectedDate: new Date(),
