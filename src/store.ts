@@ -22,7 +22,7 @@ interface AppState {
   rooms: Room[];
   bookings: Booking[];
   selectedDate: Date;
-  notificationEmails: string; // общий список из Firebase
+  notificationEmails: string;
   initializeFirebaseSync: () => () => void;
   setSelectedDate: (date: Date) => void;
   addBooking: (booking: Omit<Booking, 'id'>) => Promise<void>;
@@ -30,7 +30,7 @@ interface AppState {
   isSlotAvailable: (roomId: string, date: string, start: string, end: string) => boolean;
   getCurrentUser: () => string;
   setCurrentUser: (name: string) => void;
-  updateNotificationEmails: (emails: string) => Promise<void>; // только для админа
+  updateNotificationEmails: (emails: string) => Promise<void>;
 }
 
 export const createDateTime = (dateStr: string, timeStr: string): Date => {
@@ -44,9 +44,9 @@ const STORAGE_USER_KEY = 'booking_user_name';
 const useStore = create<AppState>((set, get) => ({
   rooms: [
     { id: 'conf-1', name: 'Конференц-зал', type: 'conference', capacity: 30, color: '#3b82f6' },
-    { id: 'large-1', name: 'Большая переговорная', type: 'large', capacity: 15, color: '#8b5cf6' },
-    { id: 'small-1', name: 'Малая переговорная A', type: 'small', capacity: 2, color: '#10b981' },
-    { id: 'small-2', name: 'Малая переговорная B', type: 'small', capacity: 2, color: '#f59e0b' },
+    { id: 'large-1', name: 'Большая переговорная 3', type: 'large', capacity: 15, color: '#8b5cf6' },
+    { id: 'small-1', name: 'Малая переговорная 1', type: 'small', capacity: 2, color: '#10b981' },
+    { id: 'small-2', name: 'Малая переговорная 2', type: 'small', capacity: 2, color: '#f59e0b' },
   ],
   bookings: [],
   selectedDate: new Date(),
