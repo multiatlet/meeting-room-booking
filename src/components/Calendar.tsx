@@ -45,7 +45,6 @@ const Calendar: React.FC = () => {
   const [startTime, setStartTime] = useState(TIME_SLOTS[0]);
   const [duration, setDuration] = useState(60);
   const [topic, setTopic] = useState('');
-  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
 
   const dates = Array.from({ length: 7 }, (_, i) => addDays(selectedDate, i));
 
@@ -62,7 +61,6 @@ const Calendar: React.FC = () => {
     setStartTime(TIME_SLOTS[0]);
     setDuration(60);
     setTopic('');
-    setGeneratedLink(null);
     logEvent('slot_viewed', { roomId, date: format(date, 'yyyy-MM-dd') });
   };
 
