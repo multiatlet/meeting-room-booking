@@ -36,7 +36,7 @@ const Calendar: React.FC = () => {
     isSlotAvailable,
     getCurrentUser,
     setCurrentUser,
-    notificationEmails, // теперь общий список из Firebase
+    notificationEmails,
   } = useStore();
 
   const [modal, setModal] = useState<{ roomId: string; date: Date } | null>(null);
@@ -92,7 +92,6 @@ const Calendar: React.FC = () => {
       userName: userName.trim(),
     });
 
-    // Отправка email (используем общий список из store)
     const emails = notificationEmails
       .split(',')
       .map(email => email.trim())
@@ -139,10 +138,12 @@ const Calendar: React.FC = () => {
   return (
     <div className="overflow-x-auto scrollbar-hide">
       <div className="grid grid-cols-[260px_repeat(7,1fr)] gap-3 min-w-[900px]">
-        <div className="p-3 text-[#b0c8e0] text-sm font-medium uppercase tracking-wider">
+        {/* Заголовок "Помещение" — закреплён слева */}
+        <div className="sticky left-0 z-10 bg-gradient-to-br from-[#1e293b] via-[#2d3a52] to-[#0f172a] p-3 text-[#b0c8e0] text-sm font-medium uppercase tracking-wider">
           Помещение
         </div>
 
+        {/* Даты */}
         {dates.map(date => {
           const isToday = isSameDay(date, new Date());
           return (
@@ -162,9 +163,11 @@ const Calendar: React.FC = () => {
           );
         })}
 
+        {/* Строки комнат */}
         {rooms.map(room => (
           <React.Fragment key={room.id}>
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 flex flex-col justify-center min-h-[90px]">
+            {/* Название комнаты — закреплено слева */}
+            <div className="sticky left-0 z-10 bg-gradient-to-br from-[#1e293b] via-[#2d3a52] to-[#0f172a] p-3 flex flex-col justify-center min-h-[90px]">
               <div className="flex items-center gap-2">
                 <span
                   className="w-3 h-3 rounded-full shadow-[0_0_6px_currentColor]"
@@ -175,6 +178,7 @@ const Calendar: React.FC = () => {
               <span className="text-[#b0c8e0] text-xs mt-1">{room.capacity} мест</span>
             </div>
 
+            {/* Ячейки дней */}
             {dates.map(date => {
               const cellBookings = getBookingsForCell(room.id, date);
               return (
@@ -227,6 +231,7 @@ const Calendar: React.FC = () => {
         ))}
       </div>
 
+      {/* Модальное окно бронирования (без изменений) */}
       {modal && selectedRoom && (
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
@@ -284,7 +289,6 @@ const Calendar: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Поле Email только для чтения (общий список) */}
                 <div>
                   <label className="block text-[#2c4f7f] text-sm mb-2">
                     Email для уведомлений (общий список)
