@@ -5,6 +5,8 @@ import {
   deleteBookingFromFirebase,
   subscribeToNotificationEmails,
   setNotificationEmails as setFirebaseNotificationEmails,
+  registerVisitor,
+  subscribeToVisitorCount,
 } from './firebase';
 import type { Booking } from './firebase';
 
@@ -23,6 +25,7 @@ interface AppState {
   bookings: Booking[];
   selectedDate: Date;
   notificationEmails: string;
+  visitorCount: number;
   initializeFirebaseSync: () => () => void;
   setSelectedDate: (date: Date) => void;
   addBooking: (booking: Omit<Booking, 'id'>) => Promise<void>;
@@ -51,13 +54,20 @@ const useStore = create<AppState>((set, get) => ({
   bookings: [],
   selectedDate: new Date(),
   notificationEmails: '',
+  visitorCount: 0,
 
   initializeFirebaseSync: () => {
     const unsubBookings = subscribeToBookings((bookings) => set({ bookings }));
     const unsubSettings = subscribeToNotificationEmails((emails) => set({ notificationEmails: emails }));
+    const unsubVisitors = subscribeToVisitorCount((count) => set({ visitorCount: count }));
+
+    // Регистрируем текущего посетителя при инициализации
+    registerVisitor().catch(console.error);
+
     return () => {
       unsubBookings();
       unsubSettings();
+      unsubVisitors();
     };
   },
 

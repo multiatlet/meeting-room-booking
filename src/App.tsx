@@ -2,10 +2,9 @@ import React, { useEffect } from 'react';
 import useStore from './store';
 import Header from './components/Header';
 import Calendar from './components/Calendar';
-import VisitorCounter from './components/VisitorCounter';
 
 const App: React.FC = () => {
-  const { initializeFirebaseSync } = useStore();
+  const { initializeFirebaseSync, visitorCount } = useStore();
 
   useEffect(() => {
     const unsubscribe = initializeFirebaseSync();
@@ -13,15 +12,18 @@ const App: React.FC = () => {
   }, [initializeFirebaseSync]);
 
   return (
-    <div className="min-h-screen p-4 md:p-6 bg-gradient-to-br from-[#1e293b] via-[#2d3a52] to-[#0f172a] flex flex-col">
-      <div className="max-w-[1400px] mx-auto w-full flex-1">
+    <div className="min-h-screen p-4 md:p-6 bg-gradient-to-br from-[#1e293b] via-[#2d3a52] to-[#0f172a]">
+      <div className="max-w-[1400px] mx-auto relative pb-12">
         <Header />
-        {/* Добавлен верхний отступ для таблицы, чтобы рамка текущего дня не обрезалась */}
+        {/* Добавляем отступ сверху, чтобы рамка текущего дня не обрезалась */}
         <div className="mt-4">
           <Calendar />
         </div>
+        {/* Счётчик уникальных посетителей */}
+        <div className="absolute bottom-2 left-4 md:left-6 text-white/50 text-xs md:text-sm">
+          👥 Уникальных посетителей: {visitorCount}
+        </div>
       </div>
-      <VisitorCounter />
     </div>
   );
 };
