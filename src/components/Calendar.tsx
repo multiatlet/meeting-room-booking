@@ -59,7 +59,6 @@ const Calendar: React.FC = () => {
     setUserName(getCurrentUser());
     setStartTime(TIME_SLOTS[0]);
     setDuration(60);
-    // Аналитика: просмотр слота
     logEvent('slot_viewed', { roomId, date: format(date, 'yyyy-MM-dd') });
   };
 
@@ -142,7 +141,7 @@ const Calendar: React.FC = () => {
     <div className="overflow-x-auto scrollbar-hide pt-1">
       <div className="grid grid-cols-[200px_repeat(7,1fr)] md:grid-cols-[240px_repeat(7,1fr)] gap-2 md:gap-3 min-w-[800px] md:min-w-[900px]">
         {/* Заголовок "Помещение" */}
-        <div className="sticky left-0 z-10 glass-card p-2 md:p-3 text-[#b0c8e0] text-[10px] md:text-sm font-medium uppercase tracking-wider">
+        <div className="sticky left-0 z-10 glass-card p-2 md:p-3 text-[#9CA3AF] text-[10px] md:text-sm font-medium uppercase tracking-wider">
           Помещение
         </div>
 
@@ -155,13 +154,13 @@ const Calendar: React.FC = () => {
             <div
               key={date.toISOString()}
               className={`glass-card p-2 md:p-3 text-center ${
-                isToday ? 'ring-2 ring-[#1a5cff]/50 shadow-[0_0_15px_rgba(26,92,255,0.2)]' : ''
+                isToday ? 'ring-2 ring-[#3B82F6]/50 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : ''
               }`}
             >
-              <div className="text-[10px] md:text-xs uppercase tracking-wider text-[#b0c8e0]/80">
+              <div className="text-[10px] md:text-xs uppercase tracking-wider text-[#9CA3AF]">
                 {format(date, 'EEE', { locale: ru })}
               </div>
-              <div className={`text-sm md:text-base font-medium ${isWeekend ? 'text-rose-400' : 'text-white'}`}>
+              <div className={`text-sm md:text-base font-medium ${isWeekend ? 'text-rose-400' : 'text-[#F9FAFB]'}`}>
                 {format(date, 'd MMM', { locale: ru })}
               </div>
             </div>
@@ -177,11 +176,11 @@ const Calendar: React.FC = () => {
                   className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full shadow-[0_0_8px_currentColor]"
                   style={{ backgroundColor: room.color, color: room.color }}
                 />
-                <span className="text-white font-medium break-words text-xs md:text-base leading-tight tracking-tight">
+                <span className="text-[#F9FAFB] font-medium break-words text-xs md:text-base leading-tight tracking-tight">
                   {room.name}
                 </span>
               </div>
-              <span className="text-[#b0c8e0] text-[10px] md:text-xs mt-1">{room.capacity} мест</span>
+              <span className="text-[#9CA3AF] text-[10px] md:text-xs mt-1">{room.capacity} мест</span>
             </div>
 
             {dates.map(date => {
@@ -200,17 +199,17 @@ const Calendar: React.FC = () => {
                   >
                     {cellBookings.length === 0 ? (
                       <div className="flex items-center justify-center h-full">
-                        <span className="text-emerald-300/80 text-xs md:text-sm font-medium">Свободно</span>
+                        <span className="text-emerald-200/90 text-xs md:text-sm font-medium">Свободно</span>
                       </div>
                     ) : (
                       <div className="space-y-0.5">
                         {cellBookings.slice(0, 3).map(b => (
                           <div key={b.id} className="text-[10px] md:text-xs flex items-start justify-between">
                             <div className="flex-1 min-w-0">
-                              <div className="text-white font-medium break-words leading-tight">
+                              <div className="text-[#F9FAFB] font-medium break-words leading-tight">
                                 {b.userName}
                               </div>
-                              <div className="text-rose-300/80">{b.start}–{b.end}</div>
+                              <div className="text-rose-200/80">{b.start}–{b.end}</div>
                             </div>
                             {b.userName === currentUser && (
                               <button
@@ -227,7 +226,7 @@ const Calendar: React.FC = () => {
                           </div>
                         ))}
                         {cellBookings.length > 3 && (
-                          <div className="text-rose-300/60 text-[10px] md:text-xs">+{cellBookings.length - 3}</div>
+                          <div className="text-rose-200/60 text-[10px] md:text-xs">+{cellBookings.length - 3}</div>
                         )}
                       </div>
                     )}
@@ -249,10 +248,10 @@ const Calendar: React.FC = () => {
             className="glass-panel p-5 md:p-7 w-full max-w-[440px] shadow-2xl scale-100 transition-all duration-300"
             onClick={e => e.stopPropagation()}
           >
-            <h2 className="text-xl md:text-2xl font-bold text-[#0a2a44] mb-1 tracking-tight">
+            <h2 className="text-xl md:text-2xl font-bold text-[#0B1220] mb-1 tracking-tight">
               {selectedRoom.name}
             </h2>
-            <p className="text-[#2c4f7f] text-sm md:text-base mb-6">
+            <p className="text-[#374151] text-sm md:text-base mb-6">
               {format(modal.date, 'd MMMM yyyy, EEEE', { locale: ru })}
             </p>
 
@@ -265,16 +264,16 @@ const Calendar: React.FC = () => {
                   placeholder="Ваше имя"
                   value={userName}
                   onChange={e => setUserName(e.target.value)}
-                  className="w-full bg-white/70 backdrop-blur-sm border border-[#1a5cff]/20 rounded-2xl px-4 py-3 text-[#0a2a44] placeholder-[#b0c8e0] focus:ring-2 focus:ring-[#1a5cff]/40 outline-none transition-all"
+                  className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-[#0B1220] placeholder-[#9CA3AF] focus:ring-2 focus:ring-[#3B82F6]/40 outline-none transition-all"
                   autoFocus
                 />
 
                 <div>
-                  <label className="block text-[#2c4f7f] text-sm mb-1.5 font-medium">Начало</label>
+                  <label className="block text-[#374151] text-sm mb-1.5 font-medium">Начало</label>
                   <select
                     value={startTime}
                     onChange={e => setStartTime(e.target.value)}
-                    className="w-full bg-white/70 backdrop-blur-sm border border-[#1a5cff]/20 rounded-2xl px-4 py-3 text-[#0a2a44]"
+                    className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-[#0B1220]"
                   >
                     {availableStartSlots.map(slot => (
                       <option key={slot} value={slot}>{slot}</option>
@@ -283,11 +282,11 @@ const Calendar: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[#2c4f7f] text-sm mb-1.5 font-medium">Длительность</label>
+                  <label className="block text-[#374151] text-sm mb-1.5 font-medium">Длительность</label>
                   <select
                     value={duration}
                     onChange={e => setDuration(parseInt(e.target.value))}
-                    className="w-full bg-white/70 backdrop-blur-sm border border-[#1a5cff]/20 rounded-2xl px-4 py-3 text-[#0a2a44]"
+                    className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-[#0B1220]"
                   >
                     {DURATION_OPTIONS.map(mins => (
                       <option key={mins} value={mins}>
@@ -297,7 +296,7 @@ const Calendar: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-3 text-sm text-[#2c4f7f]">
+                <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-3 text-sm text-[#374151]">
                   🕒 {startTime} – {addMinutesToTime(startTime, duration)}
                 </div>
               </div>
@@ -306,14 +305,14 @@ const Calendar: React.FC = () => {
             <div className="flex gap-3 mt-8">
               <button
                 onClick={closeModal}
-                className="flex-1 py-3 rounded-2xl bg-white/60 border border-[#1a5cff]/20 text-[#0a2a44] font-medium hover:bg-white/80 transition-all"
+                className="flex-1 py-3 rounded-2xl bg-white/60 border border-[#3B82F6]/20 text-[#0B1220] font-medium hover:bg-white/80 transition-all"
               >
                 Отмена
               </button>
               <button
                 onClick={handleSave}
                 disabled={availableStartSlots.length === 0}
-                className="flex-1 py-3 rounded-2xl bg-[#1a5cff] text-white font-medium shadow-lg shadow-[#1a5cff]/30 hover:bg-[#0040d0] hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="flex-1 py-3 rounded-2xl bg-[#3B82F6] text-white font-medium shadow-lg shadow-[#3B82F6]/30 hover:bg-[#2563EB] hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 Забронировать
               </button>
