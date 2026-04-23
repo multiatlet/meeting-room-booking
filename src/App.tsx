@@ -1,59 +1,60 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import useStore from './store';
 import Header from './components/Header';
 import Calendar from './components/Calendar';
 import VisitorCounter from './components/VisitorCounter';
 import { trackUniqueVisitor } from './firebase';
 
-// Хук для определения фона и темы по времени суток
-const useTimeOfDay = () => {
-  const getThemeAndBackground = (hour: number) => {
-    // Утро (06:00–11:00) — светлая тема, лёгкий фон
-    if (hour >= 6 && hour < 11) {
-      return {
-        background: 'from-[#EAF3FF] via-[#F5F7FF] to-[#FFFFFF]',
-        theme: 'light' as const,
-      };
-    }
-    // День (11:00–17:00) — светлая тема, нейтральный фон
-    if (hour >= 11 && hour < 17) {
-      return {
-        background: 'from-[#F8FAFF] via-[#EEF2FF] to-[#E5E7EB]',
-        theme: 'light' as const,
-      };
-    }
-    // Вечер (17:00–21:00) — тёмная тема
-    if (hour >= 17 && hour < 21) {
-      return {
-        background: 'from-[#1E293B] via-[#0F172A] to-[#0B1220]',
-        theme: 'dark' as const,
-      };
-    }
-    // Ночь (21:00–06:00) — тёмная тема
+// Вспомогательная функция: возвращает фон и тему по часу
+const getTimeOfDayState = (hour: number) => {
+  if (hour >= 6 && hour < 11) {
     return {
-      background: 'from-[#0A0F1C] via-[#0B1220] to-[#050814]',
+      background: 'from-[#EAF3FF] via-[#F5F7FF] to-[#FFFFFF]',
+      theme: 'light' as const,
+    };
+  }
+  if (hour >= 11 && hour < 17) {
+    return {
+      background: 'from-[#F8FAFF] via-[#EEF2FF] to-[#E5E7EB]',
+      theme: 'light' as const,
+    };
+  }
+  if (hour >= 17 && hour < 21) {
+    return {
+      background: 'from-[#1E293B] via-[#0F172A] to-[#0B1220]',
       theme: 'dark' as const,
     };
+  }
+  return {
+    background: 'from-[#0A0F1C] via-[#0B1220] to-[#050814]',
+    theme: 'dark' as const,
   };
-
-  const hour = new Date().getHours();
-  return getThemeAndBackground(hour);
 };
 
 const App: React.FC = () => {
   const { initializeFirebaseSync, setTheme } = useStore();
-  const { background: backgroundGradient, theme } = useTimeOfDay();
 
-  // Обновляем тему в store при каждом рендере и каждую минуту
+  // Состояние для динамического фона
+  const [backgroundGradient, setBackgroundGradient] = useState(
+    () => getTimeOfDayState(new Date().getHours()).background
+  );
+
   useEffect(() => {
-    setTheme(theme);
-    const interval = setInterval(() => {
+    // Функция обновления фона и темы
+    const updateTimeOfDay = () => {
       const hour = new Date().getHours();
-      const { theme: newTheme } = useTimeOfDay();
-      setTheme(newTheme);
-    }, 60000);
+      const { background, theme } = getTimeOfDayState(hour);
+      setBackgroundGradient(background);
+      setTheme(theme);
+    };
+
+    // Первоначальная установка темы (фон уже установлен через useState)
+    setTheme(getTimeOfDayState(new Date().getHours()).theme);
+
+    // Обновляем каждую минуту
+    const interval = setInterval(updateTimeOfDay, 60000);
     return () => clearInterval(interval);
-  }, [theme, setTheme]);
+  }, [setTheme]);
 
   useEffect(() => {
     const unsubscribe = initializeFirebaseSync();
