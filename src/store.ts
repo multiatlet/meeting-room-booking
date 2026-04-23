@@ -24,8 +24,6 @@ interface AppState {
   bookings: Booking[];
   selectedDate: Date;
   notificationEmails: string;
-  theme: 'light' | 'dark';               // ← новое поле
-  setTheme: (theme: 'light' | 'dark') => void; // ← новый метод
   initializeFirebaseSync: () => () => void;
   setSelectedDate: (date: Date) => void;
   addBooking: (booking: Omit<Booking, 'id'>) => Promise<void>;
@@ -81,9 +79,6 @@ const useStore = create<AppState>((set, get) => ({
   bookings: [],
   selectedDate: new Date(),
   notificationEmails: '',
-  theme: 'light', // начальное значение (переопределится в App)
-
-  setTheme: (theme) => set({ theme }),
 
   initializeFirebaseSync: () => {
     const unsubBookings = subscribeToBookings((bookings) => set({ bookings }));
