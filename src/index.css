@@ -9,37 +9,103 @@
 }
 
 @layer components {
+  /* Премиальные стеклянные карточки */
   .glass-card {
     @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg transition-all duration-300;
   }
 
+  /* Интерактивная карточка с мягким подъёмом */
   .glass-card-interactive {
     @apply glass-card hover:bg-white/10 hover:border-white/20 hover:shadow-xl hover:scale-[1.01] hover:-translate-y-0.5;
   }
 
+  /* Панель для модальных окон */
   .glass-panel {
     @apply bg-white/90 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl;
   }
 
+  /* Статус "Свободно" */
   .status-free {
-    @apply bg-emerald-500/5 text-emerald-200/90 border-emerald-500/10;
+    @apply relative overflow-hidden;
+    background-color: rgba(16, 185, 129, 0.08); /* мягкий зелёный */
+    border-color: rgba(16, 185, 129, 0.15);
   }
 
+  /* Анимация перелива для свободных ячеек */
+  .status-free::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.15),
+      transparent
+    );
+    animation: shimmer 6s infinite;
+    pointer-events: none;
+  }
+
+  /* Статус "Занято" */
   .status-occupied {
-    @apply bg-rose-500/5 text-rose-200/90 border-rose-500/10;
+    @apply relative overflow-hidden;
+    background-color: rgba(239, 68, 68, 0.08); /* мягкий красный */
+    border-color: rgba(239, 68, 68, 0.15);
   }
 
-  /* Анимация плавного перелива */
-  @keyframes soft-shimmer {
-    0% { opacity: 0.9; }
-    50% { opacity: 1; }
-    100% { opacity: 0.9; }
+  /* Анимация перелива для занятых ячеек */
+  .status-occupied::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    animation: shimmer 6s infinite;
+    pointer-events: none;
   }
-  .animate-shimmer {
-    animation: soft-shimmer 3s ease-in-out infinite;
+
+  /* Светлая тема – корректировка статусов */
+  .light-theme .status-free {
+    background-color: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.3);
+  }
+
+  .light-theme .status-occupied {
+    background-color: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.25);
+  }
+
+  /* Тёмная тема – ячейки светлее на 30% относительно базового фона */
+  .dark-theme .status-free {
+    background-color: rgba(16, 185, 129, 0.2);
+  }
+
+  .dark-theme .status-occupied {
+    background-color: rgba(239, 68, 68, 0.2);
   }
 }
 
+/* Анимация перелива */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Скрытие скроллбара */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
