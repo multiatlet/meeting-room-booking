@@ -104,15 +104,18 @@ const Calendar: React.FC = () => {
     const isVirtual = modal.roomId === 'virtual-video';
     const finalVideoLink = isVirtual ? generateMeetingLink() : undefined;
 
-    await addBooking({
+    // Формируем объект бронирования, исключая undefined поля
+    const bookingData: Omit<import('../firebase').Booking, 'id'> = {
       roomId: modal.roomId,
       date: dateStr,
       start: startTime,
       end: endTime,
       userName: userName.trim(),
-      topic: topic.trim() || undefined,
-      videoMeetingLink: finalVideoLink,
-    });
+    };
+    if (topic.trim()) bookingData.topic = topic.trim();
+    if (finalVideoLink) bookingData.videoMeetingLink = finalVideoLink;
+
+    await addBooking(bookingData);
 
     const emails = notificationEmails
       .split(',')
