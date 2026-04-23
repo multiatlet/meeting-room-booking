@@ -38,7 +38,6 @@ const Calendar: React.FC = () => {
     getCurrentUser,
     setCurrentUser,
     notificationEmails,
-    theme,
   } = useStore();
 
   const [modal, setModal] = useState<{ roomId: string; date: Date } | null>(null);
@@ -48,12 +47,6 @@ const Calendar: React.FC = () => {
   const [topic, setTopic] = useState('');
 
   const dates = Array.from({ length: 7 }, (_, i) => addDays(selectedDate, i));
-
-  const textPrimary = theme === 'light' ? 'text-gray-900' : 'text-[#F9FAFB]';
-  const textSecondary = theme === 'light' ? 'text-gray-700' : 'text-[#D1D5DB]';
-  const textMuted = theme === 'light' ? 'text-gray-500' : 'text-[#9CA3AF]';
-  const textWeekend = theme === 'light' ? 'text-red-600' : 'text-rose-400';
-  const textFree = theme === 'light' ? 'text-gray-900' : 'text-emerald-200/90'; // чёрный в светлой теме
 
   const getBookingsForCell = (roomId: string, date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -167,9 +160,9 @@ const Calendar: React.FC = () => {
   const currentUser = getCurrentUser();
 
   return (
-    <div className={`overflow-x-auto scrollbar-hide pt-1 ${theme === 'light' ? 'light-theme' : 'dark-theme'}`}>
-      <div className="grid grid-cols-[200px_repeat(7,1fr)] md:grid-cols-[240px_repeat(7,1fr)] gap-2 md:gap-3 min-w-[800px] md:min-w-[900px]">
-        <div className={`sticky left-0 z-10 glass-card p-2 md:p-3 ${textMuted} text-[10px] md:text-sm font-medium uppercase tracking-wider`}>
+    <div className="overflow-x-auto scrollbar-hide pt-1">
+      <div className="grid grid-cols-[200px_repeat(7,1fr)] md:grid-cols-[240px_repeat(7,1fr)] gap-3 min-w-[800px] md:min-w-[900px]">
+        <div className="sticky left-0 z-10 surface-card p-3 text-slate-500 dark:text-slate-400 text-xs md:text-sm font-medium uppercase tracking-wider">
           Помещение
         </div>
 
@@ -180,14 +173,14 @@ const Calendar: React.FC = () => {
           return (
             <div
               key={date.toISOString()}
-              className={`glass-card p-2 md:p-3 text-center ${
-                isToday ? 'ring-2 ring-[#3B82F6]/50 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : ''
+              className={`surface-card p-3 text-center ${
+                isToday ? 'ring-2 ring-blue-500/20 dark:ring-blue-400/20' : ''
               }`}
             >
-              <div className={`text-[10px] md:text-xs uppercase tracking-wider ${textMuted}`}>
+              <div className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 {format(date, 'EEE', { locale: ru })}
               </div>
-              <div className={`text-sm md:text-base font-medium ${isWeekend ? textWeekend : textPrimary}`}>
+              <div className={`text-sm md:text-base font-medium ${isWeekend ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`}>
                 {format(date, 'd MMM', { locale: ru })}
               </div>
             </div>
@@ -196,77 +189,59 @@ const Calendar: React.FC = () => {
 
         {rooms.map(room => (
           <React.Fragment key={room.id}>
-            <div className="sticky left-0 z-10 glass-card p-2 md:p-3 flex flex-col justify-center min-h-[70px] md:min-h-[90px]">
+            <div className="sticky left-0 z-10 surface-card p-3 flex flex-col justify-center min-h-[70px] md:min-h-[90px]">
               <div className="flex items-center gap-2">
                 <span
-                  className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full shadow-[0_0_8px_currentColor]"
-                  style={{ backgroundColor: room.color, color: room.color }}
+                  className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full"
+                  style={{ backgroundColor: room.color }}
                 />
-                <span className={`${textPrimary} font-medium break-words text-xs md:text-base leading-tight tracking-tight`}>
+                <span className="text-slate-900 dark:text-white font-medium text-xs md:text-base">
                   {room.name}
                 </span>
               </div>
-              <span className={`${textMuted} text-[10px] md:text-xs mt-1`}>{room.capacity} мест</span>
+              <span className="text-slate-500 dark:text-slate-400 text-[10px] md:text-xs mt-1">{room.capacity} мест</span>
             </div>
 
             {dates.map(date => {
               const cellBookings = getBookingsForCell(room.id, date);
               const isOccupied = cellBookings.length > 0;
               return (
-                <div
+                <button
                   key={date.toISOString()}
-                  className={`glass-card-interactive p-2 md:p-3 min-h-[70px] md:min-h-[90px] flex flex-col ${
-                    isOccupied ? 'status-occupied' : 'status-free'
-                  }`}
+                  onClick={() => openModal(room.id, date)}
+                  className={`cell-card text-left min-h-[70px] md:min-h-[90px] ${isOccupied ? 'status-occupied' : 'status-free'}`}
                 >
-                  <button
-                    onClick={() => openModal(room.id, date)}
-                    className="flex-1 text-left w-full transition-all rounded-xl -m-1 p-1"
-                  >
-                    {cellBookings.length === 0 ? (
-                      <div className="flex items-center justify-center h-full">
-                        <span className={`${textFree} text-xs md:text-sm font-medium`}>Свободно</span>
-                      </div>
-                    ) : (
-                      <div className="space-y-1">
-                        {cellBookings.slice(0, 3).map(b => (
-                          <div key={b.id} className="text-[10px] md:text-xs">
-                            <div className={`${textPrimary} font-medium break-words`}>
-                              {b.topic || b.userName}
-                            </div>
-                            <div className={`${textSecondary}`}>{b.start}–{b.end}</div>
-                            {b.videoMeetingLink && (
-                              <a
-                                href={b.videoMeetingLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:text-blue-600 underline break-all"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                ▶️ Видео
-                              </a>
-                            )}
-                            {b.userName === currentUser && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDelete(b.id);
-                                }}
-                                className="ml-1 text-rose-500 hover:text-rose-600 text-base md:text-lg leading-none transition-colors"
-                                title="Удалить"
-                              >
-                                ×
-                              </button>
-                            )}
+                  {cellBookings.length === 0 ? (
+                    <div className="flex items-center h-full">
+                      <span className="text-slate-400 dark:text-slate-500 text-sm">Свободно</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {cellBookings.slice(0, 3).map(b => (
+                        <div key={b.id} className="text-xs">
+                          <div className="text-slate-900 dark:text-white font-medium">
+                            {b.topic || b.userName}
                           </div>
-                        ))}
-                        {cellBookings.length > 3 && (
-                          <div className={`${textMuted} text-[10px] md:text-xs`}>+{cellBookings.length - 3}</div>
-                        )}
-                      </div>
-                    )}
-                  </button>
-                </div>
+                          <div className="text-slate-500 dark:text-slate-400">{b.start}–{b.end}</div>
+                          {b.videoMeetingLink && (
+                            <a
+                              href={b.videoMeetingLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 dark:text-blue-400 text-xs underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Видео
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                      {cellBookings.length > 3 && (
+                        <div className="text-slate-400 dark:text-slate-500 text-xs">+{cellBookings.length - 3}</div>
+                      )}
+                    </div>
+                  )}
+                </button>
               );
             })}
           </React.Fragment>
@@ -275,22 +250,22 @@ const Calendar: React.FC = () => {
 
       {modal && selectedRoom && (
         <div
-          className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300"
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={closeModal}
         >
           <div
-            className="glass-panel p-5 md:p-7 w-full max-w-[440px] shadow-2xl scale-100 transition-all duration-300 max-h-[90vh] overflow-y-auto"
+            className="modal-panel p-6 w-full max-w-[440px] max-h-[90vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-1 tracking-tight">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-1">
               {selectedRoom.name}
             </h2>
-            <p className="text-gray-700 text-sm md:text-base mb-4">
+            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
               {format(modal.date, 'd MMMM yyyy, EEEE', { locale: ru })}
             </p>
 
             {availableStartSlots.length === 0 ? (
-              <p className="text-rose-500 text-center py-6 text-base">Нет свободного времени</p>
+              <p className="text-rose-500 text-center py-6">Нет свободного времени</p>
             ) : (
               <div className="space-y-4">
                 <input
@@ -298,24 +273,24 @@ const Calendar: React.FC = () => {
                   placeholder="Ваше имя"
                   value={userName}
                   onChange={e => setUserName(e.target.value)}
-                  className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#3B82F6]/40 outline-none transition-all"
+                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none"
                   autoFocus
                 />
 
                 <input
                   type="text"
-                  placeholder="Тема встречи (необязательно)"
+                  placeholder="Тема встречи"
                   value={topic}
                   onChange={e => setTopic(e.target.value)}
-                  className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#3B82F6]/40 outline-none transition-all"
+                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none"
                 />
 
                 <div>
-                  <label className="block text-gray-700 text-sm mb-1.5 font-medium">Начало</label>
+                  <label className="block text-slate-700 dark:text-slate-300 text-sm mb-1.5">Начало</label>
                   <select
                     value={startTime}
                     onChange={e => setStartTime(e.target.value)}
-                    className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-gray-900"
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white"
                   >
                     {availableStartSlots.map(slot => (
                       <option key={slot} value={slot}>{slot}</option>
@@ -324,11 +299,11 @@ const Calendar: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-gray-700 text-sm mb-1.5 font-medium">Длительность</label>
+                  <label className="block text-slate-700 dark:text-slate-300 text-sm mb-1.5">Длительность</label>
                   <select
                     value={duration}
                     onChange={e => setDuration(parseInt(e.target.value))}
-                    className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-gray-900"
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white"
                   >
                     {DURATION_OPTIONS.map(mins => (
                       <option key={mins} value={mins}>
@@ -338,20 +313,20 @@ const Calendar: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-3 text-sm text-gray-700">
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 text-sm text-slate-600 dark:text-slate-300">
                   🕒 {startTime} – {addMinutesToTime(startTime, duration)}
                 </div>
 
                 {selectedRoom.id === 'virtual-video' && (
-                  <div className="border-t border-[#3B82F6]/20 pt-4">
-                    <p className="text-sm font-medium text-gray-900 mb-2">Ссылка на видеовстречу:</p>
-                    <div className="p-3 bg-white/40 rounded-xl border border-[#3B82F6]/20">
-                      <code className="block text-xs bg-black/10 p-2 rounded break-all mb-2 text-gray-900">
+                  <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white mb-2">Ссылка на видеовстречу:</p>
+                    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3">
+                      <code className="block text-xs bg-slate-100 dark:bg-slate-900 p-2 rounded break-all mb-2">
                         {generateMeetingLink()}
                       </code>
                       <button
                         onClick={() => copyToClipboard(generateMeetingLink())}
-                        className="w-full py-2 bg-[#3B82F6] text-white text-sm rounded-lg hover:bg-[#2563EB] transition"
+                        className="w-full py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
                       >
                         Копировать ссылку
                       </button>
@@ -364,14 +339,14 @@ const Calendar: React.FC = () => {
             <div className="flex gap-3 mt-8">
               <button
                 onClick={closeModal}
-                className="flex-1 py-3 rounded-2xl bg-white/60 border border-[#3B82F6]/20 text-gray-900 font-medium hover:bg-white/80 transition-all"
+                className="flex-1 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
               >
                 Отмена
               </button>
               <button
                 onClick={handleSave}
                 disabled={availableStartSlots.length === 0}
-                className="flex-1 py-3 rounded-2xl bg-[#3B82F6] text-white font-medium shadow-lg shadow-[#3B82F6]/30 hover:bg-[#2563EB] hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Забронировать
               </button>
