@@ -38,7 +38,7 @@ const Calendar: React.FC = () => {
     getCurrentUser,
     setCurrentUser,
     notificationEmails,
-    theme, // ← получаем тему из store
+    theme,
   } = useStore();
 
   const [modal, setModal] = useState<{ roomId: string; date: Date } | null>(null);
@@ -49,12 +49,19 @@ const Calendar: React.FC = () => {
 
   const dates = Array.from({ length: 7 }, (_, i) => addDays(selectedDate, i));
 
-  // Определяем классы текста в зависимости от темы
+  // Базовые классы текста
   const textPrimary = theme === 'light' ? 'text-gray-900' : 'text-[#F9FAFB]';
   const textSecondary = theme === 'light' ? 'text-gray-700' : 'text-[#D1D5DB]';
   const textMuted = theme === 'light' ? 'text-gray-500' : 'text-[#9CA3AF]';
   const textWeekend = theme === 'light' ? 'text-red-600' : 'text-rose-400';
-  const textFree = theme === 'light' ? 'text-emerald-700' : 'text-emerald-200/90';
+  // Текст "Свободно" – в светлой теме чёрный, в тёмной – изумрудный
+  const textFree = theme === 'light' ? 'text-gray-900' : 'text-emerald-200/90';
+
+  // Классы для карточек в зависимости от темы
+  // В светлой теме – темнее на 30% (bg-black/10), в тёмной – светлее на 30% (bg-white/15)
+  const cardBgClass = theme === 'light'
+    ? 'bg-black/10 backdrop-blur-xl border-gray-300/30'
+    : 'bg-white/15 backdrop-blur-xl border-white/20';
 
   const getBookingsForCell = (roomId: string, date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -170,7 +177,7 @@ const Calendar: React.FC = () => {
   return (
     <div className="overflow-x-auto scrollbar-hide pt-1">
       <div className="grid grid-cols-[200px_repeat(7,1fr)] md:grid-cols-[240px_repeat(7,1fr)] gap-2 md:gap-3 min-w-[800px] md:min-w-[900px]">
-        <div className={`sticky left-0 z-10 glass-card p-2 md:p-3 ${textMuted} text-[10px] md:text-sm font-medium uppercase tracking-wider`}>
+        <div className={`sticky left-0 z-10 ${cardBgClass} rounded-2xl shadow-lg p-2 md:p-3 ${textMuted} text-[10px] md:text-sm font-medium uppercase tracking-wider animate-shimmer`}>
           Помещение
         </div>
 
@@ -181,7 +188,7 @@ const Calendar: React.FC = () => {
           return (
             <div
               key={date.toISOString()}
-              className={`glass-card p-2 md:p-3 text-center ${
+              className={`${cardBgClass} rounded-2xl shadow-lg p-2 md:p-3 text-center animate-shimmer ${
                 isToday ? 'ring-2 ring-[#3B82F6]/50 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : ''
               }`}
             >
@@ -197,7 +204,7 @@ const Calendar: React.FC = () => {
 
         {rooms.map(room => (
           <React.Fragment key={room.id}>
-            <div className="sticky left-0 z-10 glass-card p-2 md:p-3 flex flex-col justify-center min-h-[70px] md:min-h-[90px]">
+            <div className={`sticky left-0 z-10 ${cardBgClass} rounded-2xl shadow-lg p-2 md:p-3 flex flex-col justify-center min-h-[70px] md:min-h-[90px] animate-shimmer`}>
               <div className="flex items-center gap-2">
                 <span
                   className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full shadow-[0_0_8px_currentColor]"
@@ -216,7 +223,7 @@ const Calendar: React.FC = () => {
               return (
                 <div
                   key={date.toISOString()}
-                  className={`glass-card-interactive p-2 md:p-3 min-h-[70px] md:min-h-[90px] flex flex-col ${
+                  className={`${cardBgClass} rounded-2xl shadow-lg p-2 md:p-3 min-h-[70px] md:min-h-[90px] flex flex-col animate-shimmer hover:scale-[1.01] hover:shadow-xl transition-transform ${
                     isOccupied ? 'status-occupied' : 'status-free'
                   }`}
                 >
