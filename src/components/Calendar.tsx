@@ -27,6 +27,16 @@ const addMinutesToTime = (time: string, mins: number): string => {
   return format(d, 'HH:mm');
 };
 
+// Скелетон-ячейка
+const SkeletonCell: React.FC<{ isOccupied?: boolean }> = ({ isOccupied = false }) => (
+  <div className={`cell-card min-h-[70px] md:min-h-[90px] animate-pulse ${isOccupied ? 'status-occupied' : 'status-free'}`}>
+    <div className="space-y-2">
+      <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
+      <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
+    </div>
+  </div>
+);
+
 const Calendar: React.FC = () => {
   const {
     rooms,
@@ -38,6 +48,9 @@ const Calendar: React.FC = () => {
     getCurrentUser,
     setCurrentUser,
     notificationEmails,
+    isLoading,
+    isRefreshing,
+    lastUpdated,
   } = useStore();
 
   const [modal, setModal] = useState<{ roomId: string; date: Date } | null>(null);
@@ -104,7 +117,6 @@ const Calendar: React.FC = () => {
     const isVirtual = modal.roomId === 'virtual-video';
     const finalVideoLink = isVirtual ? generateMeetingLink() : undefined;
 
-    // Формируем объект бронирования, исключая undefined поля
     const bookingData: Omit<import('../firebase').Booking, 'id'> = {
       roomId: modal.roomId,
       date: dateStr,
@@ -162,105 +174,124 @@ const Calendar: React.FC = () => {
   const selectedRoom = modal ? rooms.find(r => r.id === modal.roomId) : null;
   const currentUser = getCurrentUser();
 
+  // Отображение скелетона, если загрузка первая и нет кэша
+  const showSkeleton = isLoading && bookings.length === 0;
+
   return (
-    <div className="overflow-x-auto scrollbar-hide pt-1">
-      <div className="grid grid-cols-[200px_repeat(7,1fr)] md:grid-cols-[240px_repeat(7,1fr)] gap-3 min-w-[800px] md:min-w-[900px]">
-        <div className="sticky left-0 z-10 surface-card p-3 text-slate-500 dark:text-slate-400 text-xs md:text-sm font-medium uppercase tracking-wider">
-          Помещение
+    <div className="relative overflow-x-auto scrollbar-hide pt-1">
+      {/* Мягкий оверлей при фоновом обновлении */}
+      {isRefreshing && (
+        <div className="absolute inset-0 z-20 flex items-start justify-center pt-8 pointer-events-none">
+          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-sm text-slate-600 dark:text-slate-300 pointer-events-auto">
+            Обновление данных...
+          </div>
         </div>
+      )}
 
-        {dates.map(date => {
-          const isToday = isSameDay(date, new Date());
-          const dayOfWeek = date.getDay();
-          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-          return (
-            <div
-              key={date.toISOString()}
-              className={`surface-card p-3 text-center ${
-                isToday ? 'ring-2 ring-blue-500/20 dark:ring-blue-400/20' : ''
-              }`}
-            >
-              <div className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                {format(date, 'EEE', { locale: ru })}
-              </div>
-              <div className={`text-sm md:text-base font-medium ${isWeekend ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`}>
-                {format(date, 'd MMM', { locale: ru })}
-              </div>
-            </div>
-          );
-        })}
+      <div className={`transition-opacity duration-300 ${isRefreshing ? 'opacity-70' : 'opacity-100'}`}>
+        <div className="grid grid-cols-[200px_repeat(7,1fr)] md:grid-cols-[240px_repeat(7,1fr)] gap-3 min-w-[800px] md:min-w-[900px]">
+          <div className="sticky left-0 z-10 surface-card p-3 text-slate-500 dark:text-slate-400 text-xs md:text-sm font-medium uppercase tracking-wider">
+            Помещение
+          </div>
 
-        {rooms.map(room => (
-          <React.Fragment key={room.id}>
-            <div className="sticky left-0 z-10 surface-card p-3 flex flex-col justify-center min-h-[70px] md:min-h-[90px]">
-              <div className="flex items-center gap-2">
-                <span
-                  className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full"
-                  style={{ backgroundColor: room.color }}
-                />
-                <span className="text-slate-900 dark:text-white font-medium text-xs md:text-base">
-                  {room.name}
-                </span>
+          {dates.map(date => {
+            const isToday = isSameDay(date, new Date());
+            const dayOfWeek = date.getDay();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            return (
+              <div
+                key={date.toISOString()}
+                className={`surface-card p-3 text-center ${
+                  isToday ? 'ring-2 ring-blue-500/20 dark:ring-blue-400/20' : ''
+                }`}
+              >
+                <div className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  {format(date, 'EEE', { locale: ru })}
+                </div>
+                <div className={`text-sm md:text-base font-medium ${isWeekend ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`}>
+                  {format(date, 'd MMM', { locale: ru })}
+                </div>
               </div>
-              <span className="text-slate-500 dark:text-slate-400 text-[10px] md:text-xs mt-1">{room.capacity} мест</span>
-            </div>
+            );
+          })}
 
-            {dates.map(date => {
-              const cellBookings = getBookingsForCell(room.id, date);
-              const isOccupied = cellBookings.length > 0;
-              return (
-                <button
-                  key={date.toISOString()}
-                  onClick={() => openModal(room.id, date)}
-                  className={`cell-card text-left min-h-[70px] md:min-h-[90px] ${isOccupied ? 'status-occupied' : 'status-free'}`}
-                >
-                  {cellBookings.length === 0 ? (
-                    <div className="flex items-center h-full">
-                      <span className="text-slate-400 dark:text-slate-500 text-sm">Свободно</span>
-                    </div>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {cellBookings.slice(0, 3).map(b => (
-                        <div key={b.id} className="text-xs">
-                          <div className="text-slate-900 dark:text-white font-medium">
-                            {b.topic || b.userName}
+          {rooms.map(room => (
+            <React.Fragment key={room.id}>
+              <div className="sticky left-0 z-10 surface-card p-3 flex flex-col justify-center min-h-[70px] md:min-h-[90px]">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full"
+                    style={{ backgroundColor: room.color }}
+                  />
+                  <span className="text-slate-900 dark:text-white font-medium text-xs md:text-base">
+                    {room.name}
+                  </span>
+                </div>
+                <span className="text-slate-500 dark:text-slate-400 text-[10px] md:text-xs mt-1">{room.capacity} мест</span>
+              </div>
+
+              {dates.map(date => {
+                if (showSkeleton) {
+                  // Скелетон – показываем заглушки для всех ячеек
+                  return <SkeletonCell key={date.toISOString()} isOccupied={false} />;
+                }
+
+                const cellBookings = getBookingsForCell(room.id, date);
+                const isOccupied = cellBookings.length > 0;
+                return (
+                  <button
+                    key={date.toISOString()}
+                    onClick={() => openModal(room.id, date)}
+                    className={`cell-card text-left min-h-[70px] md:min-h-[90px] ${isOccupied ? 'status-occupied' : 'status-free'}`}
+                  >
+                    {cellBookings.length === 0 ? (
+                      <div className="flex items-center h-full">
+                        <span className="text-slate-400 dark:text-slate-500 text-sm">Свободно</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {cellBookings.slice(0, 3).map(b => (
+                          <div key={b.id} className="text-xs">
+                            <div className="text-slate-900 dark:text-white font-medium">
+                              {b.topic || b.userName}
+                            </div>
+                            <div className="text-slate-500 dark:text-slate-400">{b.start}–{b.end}</div>
+                            {b.videoMeetingLink && (
+                              <a
+                                href={b.videoMeetingLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 dark:text-blue-400 text-xs underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Видео
+                              </a>
+                            )}
+                            {b.userName === currentUser && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(b.id);
+                                }}
+                                className="mt-1 text-xs text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 transition-colors"
+                                title="Удалить бронь"
+                              >
+                                Удалить
+                              </button>
+                            )}
                           </div>
-                          <div className="text-slate-500 dark:text-slate-400">{b.start}–{b.end}</div>
-                          {b.videoMeetingLink && (
-                            <a
-                              href={b.videoMeetingLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 dark:text-blue-400 text-xs underline"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              Видео
-                            </a>
-                          )}
-                          {b.userName === currentUser && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDelete(b.id);
-                              }}
-                              className="mt-1 text-xs text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 transition-colors"
-                              title="Удалить бронь"
-                            >
-                              Удалить
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                      {cellBookings.length > 3 && (
-                        <div className="text-slate-400 dark:text-slate-500 text-xs">+{cellBookings.length - 3}</div>
-                      )}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </React.Fragment>
-        ))}
+                        ))}
+                        {cellBookings.length > 3 && (
+                          <div className="text-slate-400 dark:text-slate-500 text-xs">+{cellBookings.length - 3}</div>
+                        )}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </React.Fragment>
+          ))}
+        </div>
       </div>
 
       {modal && selectedRoom && (
