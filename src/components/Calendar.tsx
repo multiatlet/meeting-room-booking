@@ -38,6 +38,7 @@ const Calendar: React.FC = () => {
     getCurrentUser,
     setCurrentUser,
     notificationEmails,
+    theme, // ← получаем тему из store
   } = useStore();
 
   const [modal, setModal] = useState<{ roomId: string; date: Date } | null>(null);
@@ -47,6 +48,13 @@ const Calendar: React.FC = () => {
   const [topic, setTopic] = useState('');
 
   const dates = Array.from({ length: 7 }, (_, i) => addDays(selectedDate, i));
+
+  // Определяем классы текста в зависимости от темы
+  const textPrimary = theme === 'light' ? 'text-gray-900' : 'text-[#F9FAFB]';
+  const textSecondary = theme === 'light' ? 'text-gray-700' : 'text-[#D1D5DB]';
+  const textMuted = theme === 'light' ? 'text-gray-500' : 'text-[#9CA3AF]';
+  const textWeekend = theme === 'light' ? 'text-red-600' : 'text-rose-400';
+  const textFree = theme === 'light' ? 'text-emerald-700' : 'text-emerald-200/90';
 
   const getBookingsForCell = (roomId: string, date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -162,7 +170,7 @@ const Calendar: React.FC = () => {
   return (
     <div className="overflow-x-auto scrollbar-hide pt-1">
       <div className="grid grid-cols-[200px_repeat(7,1fr)] md:grid-cols-[240px_repeat(7,1fr)] gap-2 md:gap-3 min-w-[800px] md:min-w-[900px]">
-        <div className="sticky left-0 z-10 glass-card p-2 md:p-3 text-[#9CA3AF] text-[10px] md:text-sm font-medium uppercase tracking-wider">
+        <div className={`sticky left-0 z-10 glass-card p-2 md:p-3 ${textMuted} text-[10px] md:text-sm font-medium uppercase tracking-wider`}>
           Помещение
         </div>
 
@@ -177,10 +185,10 @@ const Calendar: React.FC = () => {
                 isToday ? 'ring-2 ring-[#3B82F6]/50 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : ''
               }`}
             >
-              <div className="text-[10px] md:text-xs uppercase tracking-wider text-[#9CA3AF]">
+              <div className={`text-[10px] md:text-xs uppercase tracking-wider ${textMuted}`}>
                 {format(date, 'EEE', { locale: ru })}
               </div>
-              <div className={`text-sm md:text-base font-medium ${isWeekend ? 'text-rose-400' : 'text-[#F9FAFB]'}`}>
+              <div className={`text-sm md:text-base font-medium ${isWeekend ? textWeekend : textPrimary}`}>
                 {format(date, 'd MMM', { locale: ru })}
               </div>
             </div>
@@ -195,11 +203,11 @@ const Calendar: React.FC = () => {
                   className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full shadow-[0_0_8px_currentColor]"
                   style={{ backgroundColor: room.color, color: room.color }}
                 />
-                <span className="text-[#F9FAFB] font-medium break-words text-xs md:text-base leading-tight tracking-tight">
+                <span className={`${textPrimary} font-medium break-words text-xs md:text-base leading-tight tracking-tight`}>
                   {room.name}
                 </span>
               </div>
-              <span className="text-[#9CA3AF] text-[10px] md:text-xs mt-1">{room.capacity} мест</span>
+              <span className={`${textMuted} text-[10px] md:text-xs mt-1`}>{room.capacity} мест</span>
             </div>
 
             {dates.map(date => {
@@ -218,22 +226,22 @@ const Calendar: React.FC = () => {
                   >
                     {cellBookings.length === 0 ? (
                       <div className="flex items-center justify-center h-full">
-                        <span className="text-emerald-200/90 text-xs md:text-sm font-medium">Свободно</span>
+                        <span className={`${textFree} text-xs md:text-sm font-medium`}>Свободно</span>
                       </div>
                     ) : (
                       <div className="space-y-1">
                         {cellBookings.slice(0, 3).map(b => (
                           <div key={b.id} className="text-[10px] md:text-xs">
-                            <div className="text-white font-medium break-words">
+                            <div className={`${textPrimary} font-medium break-words`}>
                               {b.topic || b.userName}
                             </div>
-                            <div className="text-rose-200/80">{b.start}–{b.end}</div>
+                            <div className={`${textSecondary}`}>{b.start}–{b.end}</div>
                             {b.videoMeetingLink && (
                               <a
                                 href={b.videoMeetingLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-400 hover:text-blue-300 underline break-all"
+                                className="text-blue-500 hover:text-blue-600 underline break-all"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 ▶️ Видео
@@ -245,7 +253,7 @@ const Calendar: React.FC = () => {
                                   e.stopPropagation();
                                   handleDelete(b.id);
                                 }}
-                                className="ml-1 text-rose-400 hover:text-rose-300 text-base md:text-lg leading-none transition-colors"
+                                className="ml-1 text-rose-500 hover:text-rose-600 text-base md:text-lg leading-none transition-colors"
                                 title="Удалить"
                               >
                                 ×
@@ -254,7 +262,7 @@ const Calendar: React.FC = () => {
                           </div>
                         ))}
                         {cellBookings.length > 3 && (
-                          <div className="text-rose-200/60 text-[10px] md:text-xs">+{cellBookings.length - 3}</div>
+                          <div className={`${textMuted} text-[10px] md:text-xs`}>+{cellBookings.length - 3}</div>
                         )}
                       </div>
                     )}
@@ -275,10 +283,10 @@ const Calendar: React.FC = () => {
             className="glass-panel p-5 md:p-7 w-full max-w-[440px] shadow-2xl scale-100 transition-all duration-300 max-h-[90vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
-            <h2 className="text-xl md:text-2xl font-bold text-[#0B1220] mb-1 tracking-tight">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-1 tracking-tight">
               {selectedRoom.name}
             </h2>
-            <p className="text-[#374151] text-sm md:text-base mb-4">
+            <p className="text-gray-700 text-sm md:text-base mb-4">
               {format(modal.date, 'd MMMM yyyy, EEEE', { locale: ru })}
             </p>
 
@@ -291,7 +299,7 @@ const Calendar: React.FC = () => {
                   placeholder="Ваше имя"
                   value={userName}
                   onChange={e => setUserName(e.target.value)}
-                  className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-[#0B1220] placeholder-[#9CA3AF] focus:ring-2 focus:ring-[#3B82F6]/40 outline-none transition-all"
+                  className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#3B82F6]/40 outline-none transition-all"
                   autoFocus
                 />
 
@@ -300,15 +308,15 @@ const Calendar: React.FC = () => {
                   placeholder="Тема встречи (необязательно)"
                   value={topic}
                   onChange={e => setTopic(e.target.value)}
-                  className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-[#0B1220] placeholder-[#9CA3AF] focus:ring-2 focus:ring-[#3B82F6]/40 outline-none transition-all"
+                  className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#3B82F6]/40 outline-none transition-all"
                 />
 
                 <div>
-                  <label className="block text-[#374151] text-sm mb-1.5 font-medium">Начало</label>
+                  <label className="block text-gray-700 text-sm mb-1.5 font-medium">Начало</label>
                   <select
                     value={startTime}
                     onChange={e => setStartTime(e.target.value)}
-                    className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-[#0B1220]"
+                    className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-gray-900"
                   >
                     {availableStartSlots.map(slot => (
                       <option key={slot} value={slot}>{slot}</option>
@@ -317,11 +325,11 @@ const Calendar: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[#374151] text-sm mb-1.5 font-medium">Длительность</label>
+                  <label className="block text-gray-700 text-sm mb-1.5 font-medium">Длительность</label>
                   <select
                     value={duration}
                     onChange={e => setDuration(parseInt(e.target.value))}
-                    className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-[#0B1220]"
+                    className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-gray-900"
                   >
                     {DURATION_OPTIONS.map(mins => (
                       <option key={mins} value={mins}>
@@ -331,15 +339,15 @@ const Calendar: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-3 text-sm text-[#374151]">
+                <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-3 text-sm text-gray-700">
                   🕒 {startTime} – {addMinutesToTime(startTime, duration)}
                 </div>
 
                 {selectedRoom.id === 'virtual-video' && (
                   <div className="border-t border-[#3B82F6]/20 pt-4">
-                    <p className="text-sm font-medium text-[#0B1220] mb-2">Ссылка на видеовстречу:</p>
+                    <p className="text-sm font-medium text-gray-900 mb-2">Ссылка на видеовстречу:</p>
                     <div className="p-3 bg-white/40 rounded-xl border border-[#3B82F6]/20">
-                      <code className="block text-xs bg-black/10 p-2 rounded break-all mb-2">
+                      <code className="block text-xs bg-black/10 p-2 rounded break-all mb-2 text-gray-900">
                         {generateMeetingLink()}
                       </code>
                       <button
@@ -357,7 +365,7 @@ const Calendar: React.FC = () => {
             <div className="flex gap-3 mt-8">
               <button
                 onClick={closeModal}
-                className="flex-1 py-3 rounded-2xl bg-white/60 border border-[#3B82F6]/20 text-[#0B1220] font-medium hover:bg-white/80 transition-all"
+                className="flex-1 py-3 rounded-2xl bg-white/60 border border-[#3B82F6]/20 text-gray-900 font-medium hover:bg-white/80 transition-all"
               >
                 Отмена
               </button>

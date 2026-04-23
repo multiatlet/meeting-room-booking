@@ -6,7 +6,7 @@ import useStore from '../store';
 const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@vpluse.ru';
 
 const Header: React.FC = () => {
-  const { selectedDate, setSelectedDate, notificationEmails, updateNotificationEmails, getCurrentUser } = useStore();
+  const { selectedDate, setSelectedDate, notificationEmails, updateNotificationEmails, getCurrentUser, theme } = useStore();
   const [showSettings, setShowSettings] = useState(false);
   const [emailsInput, setEmailsInput] = useState(notificationEmails);
 
@@ -24,26 +24,29 @@ const Header: React.FC = () => {
 
   const isTodayVisible = isSameDay(selectedDate, new Date());
 
+  const textPrimary = theme === 'light' ? 'text-gray-900' : 'text-[#F9FAFB]';
+  const textSecondary = theme === 'light' ? 'text-gray-700' : 'text-[#D1D5DB]';
+
   return (
     <>
       <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <h1 className="text-3xl md:text-4xl font-bold text-[#F9FAFB] tracking-tight">
+        <h1 className={`text-3xl md:text-4xl font-bold ${textPrimary} tracking-tight`}>
           Бронирование переговорных
         </h1>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSelectedDate(addDays(selectedDate, -1))}
-            className="w-10 h-10 rounded-full glass-card flex items-center justify-center text-[#D1D5DB] hover:text-white hover:bg-white/10 transition"
+            className={`w-10 h-10 rounded-full glass-card flex items-center justify-center ${textSecondary} hover:text-current hover:bg-white/10 transition`}
           >
             ←
           </button>
-          <span className="text-[#F9FAFB] text-lg font-medium min-w-[180px] text-center">
+          <span className={`${textPrimary} text-lg font-medium min-w-[180px] text-center`}>
             {format(selectedDate, 'd MMMM yyyy', { locale: ru })}
           </span>
           <button
             onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-            className="w-10 h-10 rounded-full glass-card flex items-center justify-center text-[#D1D5DB] hover:text-white hover:bg-white/10 transition"
+            className={`w-10 h-10 rounded-full glass-card flex items-center justify-center ${textSecondary} hover:text-current hover:bg-white/10 transition`}
           >
             →
           </button>
@@ -51,7 +54,7 @@ const Header: React.FC = () => {
           {!isTodayVisible && (
             <button
               onClick={goToToday}
-              className="px-3 py-1.5 rounded-full glass-card text-[#D1D5DB] text-sm hover:text-white hover:bg-white/10 transition"
+              className={`px-3 py-1.5 rounded-full glass-card ${textSecondary} text-sm hover:text-current hover:bg-white/10 transition`}
               title="Вернуться к сегодняшней дате"
             >
               Сегодня
@@ -64,7 +67,7 @@ const Header: React.FC = () => {
                 setEmailsInput(notificationEmails);
                 setShowSettings(true);
               }}
-              className="w-10 h-10 rounded-full glass-card flex items-center justify-center text-[#D1D5DB] hover:text-white hover:bg-white/10 transition"
+              className={`w-10 h-10 rounded-full glass-card flex items-center justify-center ${textSecondary} hover:text-current hover:bg-white/10 transition`}
               title="Настройки уведомлений"
             >
               ⚙️
@@ -82,8 +85,8 @@ const Header: React.FC = () => {
             className="glass-panel p-6 w-[420px] max-w-full shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
-            <h2 className="text-xl font-bold text-[#0B1220] mb-4">Настройки уведомлений (админ)</h2>
-            <p className="text-[#374151] text-sm mb-2">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Настройки уведомлений (админ)</h2>
+            <p className="text-gray-700 text-sm mb-2">
               Общий список email для рассылки (через запятую)
             </p>
             <input
@@ -91,12 +94,12 @@ const Header: React.FC = () => {
               placeholder="admin@vpluse.ru, manager@vpluse.ru"
               value={emailsInput}
               onChange={e => setEmailsInput(e.target.value)}
-              className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-[#0B1220] placeholder-[#9CA3AF] focus:ring-2 focus:ring-[#3B82F6]/40 outline-none mb-6"
+              className="w-full bg-white/70 backdrop-blur-sm border border-[#3B82F6]/20 rounded-2xl px-4 py-3 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-[#3B82F6]/40 outline-none mb-6"
             />
             <div className="flex gap-3">
               <button
                 onClick={() => setShowSettings(false)}
-                className="flex-1 py-3 rounded-2xl bg-white/60 border border-[#3B82F6]/20 text-[#0B1220] font-medium hover:bg-white/80 transition"
+                className="flex-1 py-3 rounded-2xl bg-white/60 border border-[#3B82F6]/20 text-gray-900 font-medium hover:bg-white/80 transition"
               >
                 Отмена
               </button>
