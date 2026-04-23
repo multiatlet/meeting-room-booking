@@ -50,7 +50,6 @@ const Calendar: React.FC = () => {
     notificationEmails,
     isLoading,
     isRefreshing,
-    lastUpdated,
   } = useStore();
 
   const [modal, setModal] = useState<{ roomId: string; date: Date } | null>(null);
@@ -174,7 +173,7 @@ const Calendar: React.FC = () => {
   const selectedRoom = modal ? rooms.find(r => r.id === modal.roomId) : null;
   const currentUser = getCurrentUser();
 
-  // Отображение скелетона, если загрузка первая и нет кэша
+  // Показываем скелетон, только если нет кэша и идёт первая загрузка
   const showSkeleton = isLoading && bookings.length === 0;
 
   return (
@@ -232,7 +231,6 @@ const Calendar: React.FC = () => {
 
               {dates.map(date => {
                 if (showSkeleton) {
-                  // Скелетон – показываем заглушки для всех ячеек
                   return <SkeletonCell key={date.toISOString()} isOccupied={false} />;
                 }
 
