@@ -9,31 +9,26 @@
 }
 
 @layer components {
-  /* Уровень 2 — контейнеры */
   .surface-card {
-    @apply bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm;
+    @apply bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm transition-all duration-200;
   }
 
-  /* Уровень 3 — карточки */
   .cell-card {
-    @apply bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2.5 transition-colors duration-150;
+    @apply bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2.5 transition-all duration-200;
   }
 
   .cell-card:hover {
     @apply bg-slate-50 dark:bg-[#1e293b] border-slate-300 dark:border-slate-700;
   }
 
-  /* Свободная ячейка */
   .status-free {
     @apply border-l-4 border-l-emerald-500;
   }
 
-  /* Занятая ячейка */
   .status-occupied {
     @apply border-l-4 border-l-rose-500;
   }
 
-  /* Модальное окно */
   .modal-panel {
     @apply bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl;
   }

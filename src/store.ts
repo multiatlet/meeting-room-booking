@@ -24,6 +24,9 @@ interface AppState {
   bookings: Booking[];
   selectedDate: Date;
   notificationEmails: string;
+  isLoading: boolean;          // первый запуск без кэша
+  isRefreshing: boolean;       // фоновое обновление
+  lastUpdated: number | null;  // timestamp последнего обновления
   initializeFirebaseSync: () => () => void;
   setSelectedDate: (date: Date) => void;
   addBooking: (booking: Omit<Booking, 'id'>) => Promise<void>;
@@ -41,6 +44,21 @@ export const createDateTime = (dateStr: string, timeStr: string): Date => {
 };
 
 const STORAGE_USER_KEY = 'booking_user_name';
+const CACHE_KEY = 'bookings_cache';
+
+// Безопасная загрузка кэша
+const loadCachedBookings = (): Booking[] => {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {
+    console.warn('Failed to load cache', e);
+  }
+  return [];
+};
 
 const validateBooking = (booking: Omit<Booking, 'id'>, existingBookings: Booking[]): string | null => {
   if (!booking.userName || booking.userName.trim().length === 0) {
@@ -68,93 +86,122 @@ const validateBooking = (booking: Omit<Booking, 'id'>, existingBookings: Booking
   return null;
 };
 
-const useStore = create<AppState>((set, get) => ({
-  rooms: [
-    { id: 'small-1', name: 'Малая переговорная 1', type: 'small', capacity: 2, color: '#10b981' },
-    { id: 'small-2', name: 'Малая переговорная 2', type: 'small', capacity: 2, color: '#f59e0b' },
-    { id: 'large-1', name: 'Большая переговорная 3', type: 'large', capacity: 15, color: '#8b5cf6' },
-    { id: 'conf-1', name: 'Конференц-зал', type: 'conference', capacity: 30, color: '#3b82f6' },
-    { id: 'virtual-video', name: 'Видеовстреча (beta)', type: 'virtual', capacity: 100, color: '#8b5cf6' },
-  ],
-  bookings: [],
-  selectedDate: new Date(),
-  notificationEmails: '',
+const useStore = create<AppState>((set, get) => {
+  const initialCache = loadCachedBookings();
 
-  initializeFirebaseSync: () => {
-    const unsubBookings = subscribeToBookings((bookings) => set({ bookings }));
-    const unsubSettings = subscribeToNotificationEmails((emails) => set({ notificationEmails: emails }));
-    return () => {
-      unsubBookings();
-      unsubSettings();
-    };
-  },
+  return {
+    rooms: [
+      { id: 'small-1', name: 'Малая переговорная 1', type: 'small', capacity: 2, color: '#10b981' },
+      { id: 'small-2', name: 'Малая переговорная 2', type: 'small', capacity: 2, color: '#f59e0b' },
+      { id: 'large-1', name: 'Большая переговорная 3', type: 'large', capacity: 15, color: '#8b5cf6' },
+      { id: 'conf-1', name: 'Конференц-зал', type: 'conference', capacity: 30, color: '#3b82f6' },
+      { id: 'virtual-video', name: 'Видеовстреча (beta)', type: 'virtual', capacity: 100, color: '#8b5cf6' },
+    ],
+    bookings: initialCache,
+    selectedDate: new Date(),
+    notificationEmails: '',
+    isLoading: initialCache.length === 0,
+    isRefreshing: false,
+    lastUpdated: initialCache.length > 0 ? Date.now() : null,
 
-  setSelectedDate: (date) => set({ selectedDate: date }),
+    initializeFirebaseSync: () => {
+      // Если кэш есть, но мы подключаемся к Firebase – включаем фоновое обновление
+      if (initialCache.length > 0) {
+        set({ isRefreshing: true });
+      }
 
-  addBooking: async (booking) => {
-    const { bookings } = get();
-    const error = validateBooking(booking, bookings);
-    if (error) {
-      alert(error);
-      return;
-    }
-    try {
-      await addBookingToFirebase(booking);
-      localStorage.setItem(STORAGE_USER_KEY, booking.userName);
-      await logEvent('booking_created', { roomId: booking.roomId, date: booking.date, start: booking.start });
-      alert('✅ Комната забронирована!');
-    } catch (error) {
-      console.error('Ошибка при добавлении брони:', error);
-      alert('❌ Не удалось забронировать');
-    }
-  },
+      const unsubBookings = subscribeToBookings((freshBookings) => {
+        // Сохраняем в кэш
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify(freshBookings));
+        } catch (e) {
+          console.warn('Failed to save cache', e);
+        }
 
-  cancelBooking: async (bookingId) => {
-    const { bookings, getCurrentUser } = get();
-    const booking = bookings.find(b => b.id === bookingId);
-    if (!booking) return false;
-    if (booking.userName !== getCurrentUser()) {
-      alert('Вы не можете удалить чужую бронь');
-      return false;
-    }
-    try {
-      await deleteBookingFromFirebase(bookingId);
-      await logEvent('booking_deleted', { roomId: booking.roomId, date: booking.date });
-      alert('🗑️ Бронь отменена');
-      return true;
-    } catch (error) {
-      console.error('Ошибка при отмене брони:', error);
-      alert('❌ Не удалось отменить бронь');
-      return false;
-    }
-  },
+        set({
+          bookings: freshBookings,
+          isLoading: false,
+          isRefreshing: false,
+          lastUpdated: Date.now(),
+        });
+      });
 
-  isSlotAvailable: (roomId, date, start, end) => {
-    if (roomId === 'virtual-video') {
-      return true;
-    }
-    const { bookings } = get();
-    return !bookings.some(b => {
-      if (b.roomId !== roomId || b.date !== date) return false;
-      const bStart = createDateTime(b.date, b.start);
-      const bEnd = createDateTime(b.date, b.end);
-      const slotStart = createDateTime(date, start);
-      const slotEnd = createDateTime(date, end);
-      return slotStart < bEnd && slotEnd > bStart;
-    });
-  },
+      const unsubSettings = subscribeToNotificationEmails((emails) => set({ notificationEmails: emails }));
 
-  getCurrentUser: () => {
-    return localStorage.getItem(STORAGE_USER_KEY) || '';
-  },
+      return () => {
+        unsubBookings();
+        unsubSettings();
+      };
+    },
 
-  setCurrentUser: (name: string) => {
-    localStorage.setItem(STORAGE_USER_KEY, name);
-  },
+    setSelectedDate: (date) => set({ selectedDate: date }),
 
-  updateNotificationEmails: async (emails: string) => {
-    await setFirebaseNotificationEmails(emails);
-  },
-}));
+    addBooking: async (booking) => {
+      const { bookings } = get();
+      const error = validateBooking(booking, bookings);
+      if (error) {
+        alert(error);
+        return;
+      }
+      try {
+        // Оптимистичное обновление UI можно добавить позже
+        await addBookingToFirebase(booking);
+        localStorage.setItem(STORAGE_USER_KEY, booking.userName);
+        await logEvent('booking_created', { roomId: booking.roomId, date: booking.date, start: booking.start });
+        alert('✅ Комната забронирована!');
+      } catch (error) {
+        console.error('Ошибка при добавлении брони:', error);
+        alert('❌ Не удалось забронировать');
+      }
+    },
+
+    cancelBooking: async (bookingId) => {
+      const { bookings, getCurrentUser } = get();
+      const booking = bookings.find(b => b.id === bookingId);
+      if (!booking) return false;
+      if (booking.userName !== getCurrentUser()) {
+        alert('Вы не можете удалить чужую бронь');
+        return false;
+      }
+      try {
+        await deleteBookingFromFirebase(bookingId);
+        await logEvent('booking_deleted', { roomId: booking.roomId, date: booking.date });
+        alert('🗑️ Бронь отменена');
+        return true;
+      } catch (error) {
+        console.error('Ошибка при отмене брони:', error);
+        alert('❌ Не удалось отменить бронь');
+        return false;
+      }
+    },
+
+    isSlotAvailable: (roomId, date, start, end) => {
+      if (roomId === 'virtual-video') {
+        return true;
+      }
+      const { bookings } = get();
+      return !bookings.some(b => {
+        if (b.roomId !== roomId || b.date !== date) return false;
+        const bStart = createDateTime(b.date, b.start);
+        const bEnd = createDateTime(b.date, b.end);
+        const slotStart = createDateTime(date, start);
+        const slotEnd = createDateTime(date, end);
+        return slotStart < bEnd && slotEnd > bStart;
+      });
+    },
+
+    getCurrentUser: () => {
+      return localStorage.getItem(STORAGE_USER_KEY) || '';
+    },
+
+    setCurrentUser: (name: string) => {
+      localStorage.setItem(STORAGE_USER_KEY, name);
+    },
+
+    updateNotificationEmails: async (emails: string) => {
+      await setFirebaseNotificationEmails(emails);
+    },
+  };
+});
 
 export default useStore;
