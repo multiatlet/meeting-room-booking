@@ -24,6 +24,8 @@ interface AppState {
   bookings: Booking[];
   selectedDate: Date;
   notificationEmails: string;
+  theme: 'light' | 'dark';               // ← новое поле
+  setTheme: (theme: 'light' | 'dark') => void; // ← новый метод
   initializeFirebaseSync: () => () => void;
   setSelectedDate: (date: Date) => void;
   addBooking: (booking: Omit<Booking, 'id'>) => Promise<void>;
@@ -54,7 +56,6 @@ const validateBooking = (booking: Omit<Booking, 'id'>, existingBookings: Booking
   if (end <= start) {
     return 'Время окончания должно быть позже начала';
   }
-  // Для виртуальной комнаты пропускаем проверку конфликтов
   if (booking.roomId === 'virtual-video') {
     return null;
   }
@@ -80,6 +81,9 @@ const useStore = create<AppState>((set, get) => ({
   bookings: [],
   selectedDate: new Date(),
   notificationEmails: '',
+  theme: 'light', // начальное значение (переопределится в App)
+
+  setTheme: (theme) => set({ theme }),
 
   initializeFirebaseSync: () => {
     const unsubBookings = subscribeToBookings((bookings) => set({ bookings }));
@@ -131,7 +135,6 @@ const useStore = create<AppState>((set, get) => ({
   },
 
   isSlotAvailable: (roomId, date, start, end) => {
-    // Для виртуальной комнаты всегда доступно
     if (roomId === 'virtual-video') {
       return true;
     }
