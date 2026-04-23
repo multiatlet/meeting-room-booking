@@ -234,6 +234,18 @@ const Calendar: React.FC = () => {
                               Видео
                             </a>
                           )}
+                          {b.userName === currentUser && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(b.id);
+                              }}
+                              className="mt-1 text-xs text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 transition-colors"
+                              title="Удалить бронь"
+                            >
+                              Удалить
+                            </button>
+                          )}
                         </div>
                       ))}
                       {cellBookings.length > 3 && (
