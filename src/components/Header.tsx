@@ -27,23 +27,23 @@ const Header: React.FC = () => {
   return (
     <>
       <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+        <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
           Бронирование переговорных
         </h1>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setSelectedDate(addDays(selectedDate, -1))}
-            className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="w-9 h-9 rounded-lg border border-zinc-800 flex items-center justify-center text-zinc-300 hover:bg-zinc-900 transition-colors"
           >
             ←
           </button>
-          <span className="text-slate-900 dark:text-white text-base font-medium min-w-[160px] text-center">
+          <span className="text-white text-base font-medium min-w-[160px] text-center">
             {format(selectedDate, 'd MMMM yyyy', { locale: ru })}
           </span>
           <button
             onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-            className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="w-9 h-9 rounded-lg border border-zinc-800 flex items-center justify-center text-zinc-300 hover:bg-zinc-900 transition-colors"
           >
             →
           </button>
@@ -51,7 +51,7 @@ const Header: React.FC = () => {
           {!isTodayVisible && (
             <button
               onClick={goToToday}
-              className="ml-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              className="ml-1 px-3 py-1.5 rounded-lg border border-zinc-800 text-zinc-300 text-sm hover:bg-zinc-900 transition-colors"
             >
               Сегодня
             </button>
@@ -63,7 +63,7 @@ const Header: React.FC = () => {
                 setEmailsInput(notificationEmails);
                 setShowSettings(true);
               }}
-              className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              className="w-9 h-9 rounded-lg border border-zinc-800 flex items-center justify-center text-zinc-300 hover:bg-zinc-900 transition-colors"
               title="Настройки уведомлений"
             >
               ⚙️
@@ -74,15 +74,15 @@ const Header: React.FC = () => {
 
       {showSettings && (
         <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={() => setShowSettings(false)}
         >
           <div
-            className="modal-panel p-6 w-[420px] max-w-full"
+            className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl w-[420px] max-w-full shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Настройки уведомлений (админ)</h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mb-2">
+            <h2 className="text-xl font-semibold text-white mb-4">Настройки уведомлений (админ)</h2>
+            <p className="text-zinc-400 text-sm mb-2">
               Общий список email для рассылки (через запятую)
             </p>
             <input
@@ -90,12 +90,12 @@ const Header: React.FC = () => {
               placeholder="admin@vpluse.ru, manager@vpluse.ru"
               value={emailsInput}
               onChange={e => setEmailsInput(e.target.value)}
-              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none mb-6"
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:ring-2 focus:ring-blue-500 outline-none mb-6"
             />
             <div className="flex gap-3">
               <button
                 onClick={() => setShowSettings(false)}
-                className="flex-1 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                className="flex-1 py-3 rounded-xl bg-zinc-800 text-zinc-300 font-medium hover:bg-zinc-700 transition-colors"
               >
                 Отмена
               </button>

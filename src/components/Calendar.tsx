@@ -27,12 +27,11 @@ const addMinutesToTime = (time: string, mins: number): string => {
   return format(d, 'HH:mm');
 };
 
-// Скелетон-ячейка
 const SkeletonCell: React.FC<{ isOccupied?: boolean }> = ({ isOccupied = false }) => (
   <div className={`cell-card min-h-[70px] md:min-h-[90px] animate-pulse ${isOccupied ? 'status-occupied' : 'status-free'}`}>
     <div className="space-y-2">
-      <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
-      <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
+      <div className="h-4 bg-slate-700 rounded w-3/4"></div>
+      <div className="h-3 bg-slate-700 rounded w-1/2"></div>
     </div>
   </div>
 );
@@ -83,7 +82,8 @@ const Calendar: React.FC = () => {
     const room = rooms.find(r => r.id === modal.roomId);
     const base = `${room?.name || 'meeting'}-${format(modal.date, 'yyyy-MM-dd')}-${startTime}`;
     const meetingId = base.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
-    return `https://meet.jit.si/${meetingId}`;
+    // Ваш собственный Jitsi-сервер
+    return `https://xn--b1aedk6a.xn--b1agrpl1f.pw/${meetingId}`;
   };
 
   const copyToClipboard = (text: string) => {
@@ -173,15 +173,13 @@ const Calendar: React.FC = () => {
   const selectedRoom = modal ? rooms.find(r => r.id === modal.roomId) : null;
   const currentUser = getCurrentUser();
 
-  // Показываем скелетон, только если нет кэша и идёт первая загрузка
   const showSkeleton = isLoading && bookings.length === 0;
 
   return (
     <div className="relative overflow-x-auto scrollbar-hide pt-1">
-      {/* Мягкий оверлей при фоновом обновлении */}
       {isRefreshing && (
         <div className="absolute inset-0 z-20 flex items-start justify-center pt-8 pointer-events-none">
-          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-sm text-slate-600 dark:text-slate-300 pointer-events-auto">
+          <div className="bg-zinc-800/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-sm text-zinc-300 pointer-events-auto">
             Обновление данных...
           </div>
         </div>
@@ -189,7 +187,7 @@ const Calendar: React.FC = () => {
 
       <div className={`transition-opacity duration-300 ${isRefreshing ? 'opacity-70' : 'opacity-100'}`}>
         <div className="grid grid-cols-[200px_repeat(7,1fr)] md:grid-cols-[240px_repeat(7,1fr)] gap-3 min-w-[800px] md:min-w-[900px]">
-          <div className="sticky left-0 z-10 surface-card p-3 text-slate-500 dark:text-slate-400 text-xs md:text-sm font-medium uppercase tracking-wider">
+          <div className="sticky left-0 z-10 surface-card p-3 text-zinc-400 text-xs md:text-sm font-medium uppercase tracking-wider">
             Помещение
           </div>
 
@@ -204,10 +202,10 @@ const Calendar: React.FC = () => {
                   isToday ? 'ring-2 ring-blue-500/20 dark:ring-blue-400/20' : ''
                 }`}
               >
-                <div className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <div className="text-xs uppercase tracking-wider text-zinc-400">
                   {format(date, 'EEE', { locale: ru })}
                 </div>
-                <div className={`text-sm md:text-base font-medium ${isWeekend ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`}>
+                <div className={`text-sm md:text-base font-medium ${isWeekend ? 'text-rose-500' : 'text-white'}`}>
                   {format(date, 'd MMM', { locale: ru })}
                 </div>
               </div>
@@ -222,11 +220,13 @@ const Calendar: React.FC = () => {
                     className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full"
                     style={{ backgroundColor: room.color }}
                   />
-                  <span className="text-slate-900 dark:text-white font-medium text-xs md:text-base">
+                  <span className="text-white font-medium text-xs md:text-base">
                     {room.name}
                   </span>
                 </div>
-                <span className="text-slate-500 dark:text-slate-400 text-[10px] md:text-xs mt-1">{room.capacity} мест</span>
+                {room.capacity > 0 && (
+                  <span className="text-zinc-400 text-[10px] md:text-xs mt-1">{room.capacity} мест</span>
+                )}
               </div>
 
               {dates.map(date => {
@@ -244,22 +244,22 @@ const Calendar: React.FC = () => {
                   >
                     {cellBookings.length === 0 ? (
                       <div className="flex items-center h-full">
-                        <span className="text-slate-400 dark:text-slate-500 text-sm">Свободно</span>
+                        <span className="text-zinc-500 text-sm">Свободно</span>
                       </div>
                     ) : (
                       <div className="space-y-1.5">
                         {cellBookings.slice(0, 3).map(b => (
                           <div key={b.id} className="text-xs">
-                            <div className="text-slate-900 dark:text-white font-medium">
+                            <div className="text-white font-medium">
                               {b.topic || b.userName}
                             </div>
-                            <div className="text-slate-500 dark:text-slate-400">{b.start}–{b.end}</div>
+                            <div className="text-zinc-400">{b.start}–{b.end}</div>
                             {b.videoMeetingLink && (
                               <a
                                 href={b.videoMeetingLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-600 dark:text-blue-400 text-xs underline"
+                                className="text-blue-400 text-xs underline"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 Видео
@@ -271,7 +271,7 @@ const Calendar: React.FC = () => {
                                   e.stopPropagation();
                                   handleDelete(b.id);
                                 }}
-                                className="mt-1 text-xs text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 transition-colors"
+                                className="mt-1 text-xs text-rose-400 hover:text-rose-300 transition-colors"
                                 title="Удалить бронь"
                               >
                                 Удалить
@@ -280,7 +280,7 @@ const Calendar: React.FC = () => {
                           </div>
                         ))}
                         {cellBookings.length > 3 && (
-                          <div className="text-slate-400 dark:text-slate-500 text-xs">+{cellBookings.length - 3}</div>
+                          <div className="text-zinc-500 text-xs">+{cellBookings.length - 3}</div>
                         )}
                       </div>
                     )}
@@ -294,17 +294,17 @@ const Calendar: React.FC = () => {
 
       {modal && selectedRoom && (
         <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={closeModal}
         >
           <div
-            className="modal-panel p-6 w-full max-w-[440px] max-h-[90vh] overflow-y-auto"
+            className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl w-full max-w-[440px] max-h-[90vh] overflow-y-auto shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-1">
+            <h2 className="text-xl font-semibold text-white mb-1">
               {selectedRoom.name}
             </h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
+            <p className="text-zinc-400 text-sm mb-6">
               {format(modal.date, 'd MMMM yyyy, EEEE', { locale: ru })}
             </p>
 
@@ -317,7 +317,7 @@ const Calendar: React.FC = () => {
                   placeholder="Ваше имя"
                   value={userName}
                   onChange={e => setUserName(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:ring-2 focus:ring-blue-500 outline-none"
                   autoFocus
                 />
 
@@ -326,15 +326,15 @@ const Calendar: React.FC = () => {
                   placeholder="Тема встречи"
                   value={topic}
                   onChange={e => setTopic(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:ring-2 focus:ring-blue-500 outline-none"
                 />
 
                 <div>
-                  <label className="block text-slate-700 dark:text-slate-300 text-sm mb-1.5">Начало</label>
+                  <label className="block text-zinc-300 text-sm mb-1.5">Начало</label>
                   <select
                     value={startTime}
                     onChange={e => setStartTime(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white"
                   >
                     {availableStartSlots.map(slot => (
                       <option key={slot} value={slot}>{slot}</option>
@@ -343,11 +343,11 @@ const Calendar: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-slate-700 dark:text-slate-300 text-sm mb-1.5">Длительность</label>
+                  <label className="block text-zinc-300 text-sm mb-1.5">Длительность</label>
                   <select
                     value={duration}
                     onChange={e => setDuration(parseInt(e.target.value))}
-                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white"
                   >
                     {DURATION_OPTIONS.map(mins => (
                       <option key={mins} value={mins}>
@@ -357,15 +357,15 @@ const Calendar: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 text-sm text-slate-600 dark:text-slate-300">
+                <div className="bg-zinc-800/50 rounded-xl p-3 text-sm text-zinc-300">
                   🕒 {startTime} – {addMinutesToTime(startTime, duration)}
                 </div>
 
                 {selectedRoom.id === 'virtual-video' && (
-                  <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-                    <p className="text-sm font-medium text-slate-900 dark:text-white mb-2">Ссылка на видеовстречу:</p>
-                    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3">
-                      <code className="block text-xs bg-slate-100 dark:bg-slate-900 p-2 rounded break-all mb-2">
+                  <div className="border-t border-zinc-700 pt-4">
+                    <p className="text-sm font-medium text-white mb-2">Ссылка на видеовстречу:</p>
+                    <div className="bg-zinc-800/50 rounded-xl p-3">
+                      <code className="block text-xs bg-zinc-900 p-2 rounded break-all mb-2 text-zinc-300">
                         {generateMeetingLink()}
                       </code>
                       <button
@@ -383,7 +383,7 @@ const Calendar: React.FC = () => {
             <div className="flex gap-3 mt-8">
               <button
                 onClick={closeModal}
-                className="flex-1 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                className="flex-1 py-3 rounded-xl bg-zinc-800 text-zinc-300 font-medium hover:bg-zinc-700 transition-colors"
               >
                 Отмена
               </button>
