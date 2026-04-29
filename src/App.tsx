@@ -25,7 +25,7 @@ const App: React.FC = () => {
   }, [initializeFirebaseSync]);
 
   return (
-    <div className="min-h-screen p-4 md:p-6">
+    <div className="min-h-screen p-4 md:p-6 bg-[#09090b]">
       <div className="max-w-[1400px] mx-auto">
         <Header />
         <Calendar />

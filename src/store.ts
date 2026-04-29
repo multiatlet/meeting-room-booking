@@ -24,9 +24,9 @@ interface AppState {
   bookings: Booking[];
   selectedDate: Date;
   notificationEmails: string;
-  isLoading: boolean;          // первый запуск без кэша
-  isRefreshing: boolean;       // фоновое обновление
-  lastUpdated: number | null;  // timestamp последнего обновления
+  isLoading: boolean;
+  isRefreshing: boolean;
+  lastUpdated: number | null;
   initializeFirebaseSync: () => () => void;
   setSelectedDate: (date: Date) => void;
   addBooking: (booking: Omit<Booking, 'id'>) => Promise<void>;
@@ -46,7 +46,6 @@ export const createDateTime = (dateStr: string, timeStr: string): Date => {
 const STORAGE_USER_KEY = 'booking_user_name';
 const CACHE_KEY = 'bookings_cache';
 
-// Безопасная загрузка кэша
 const loadCachedBookings = (): Booking[] => {
   try {
     const cached = localStorage.getItem(CACHE_KEY);
@@ -95,7 +94,7 @@ const useStore = create<AppState>((set, get) => {
       { id: 'small-2', name: 'Малая переговорная 2', type: 'small', capacity: 2, color: '#f59e0b' },
       { id: 'large-1', name: 'Большая переговорная 3', type: 'large', capacity: 15, color: '#8b5cf6' },
       { id: 'conf-1', name: 'Конференц-зал', type: 'conference', capacity: 30, color: '#3b82f6' },
-      { id: 'virtual-video', name: 'Видеовстреча (beta)', type: 'virtual', capacity: 100, color: '#8b5cf6' },
+      { id: 'virtual-video', name: 'Видеовстреча', type: 'virtual', capacity: 0, color: '#8b5cf6' },
     ],
     bookings: initialCache,
     selectedDate: new Date(),
@@ -105,19 +104,15 @@ const useStore = create<AppState>((set, get) => {
     lastUpdated: initialCache.length > 0 ? Date.now() : null,
 
     initializeFirebaseSync: () => {
-      // Если кэш есть, но мы подключаемся к Firebase – включаем фоновое обновление
       if (initialCache.length > 0) {
         set({ isRefreshing: true });
       }
-
       const unsubBookings = subscribeToBookings((freshBookings) => {
-        // Сохраняем в кэш
         try {
           localStorage.setItem(CACHE_KEY, JSON.stringify(freshBookings));
         } catch (e) {
           console.warn('Failed to save cache', e);
         }
-
         set({
           bookings: freshBookings,
           isLoading: false,
@@ -125,9 +120,7 @@ const useStore = create<AppState>((set, get) => {
           lastUpdated: Date.now(),
         });
       });
-
       const unsubSettings = subscribeToNotificationEmails((emails) => set({ notificationEmails: emails }));
-
       return () => {
         unsubBookings();
         unsubSettings();
@@ -144,7 +137,6 @@ const useStore = create<AppState>((set, get) => {
         return;
       }
       try {
-        // Оптимистичное обновление UI можно добавить позже
         await addBookingToFirebase(booking);
         localStorage.setItem(STORAGE_USER_KEY, booking.userName);
         await logEvent('booking_created', { roomId: booking.roomId, date: booking.date, start: booking.start });

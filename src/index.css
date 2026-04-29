@@ -4,21 +4,29 @@
 
 @layer base {
   body {
-    @apply antialiased bg-[#f8fafc] dark:bg-[#0b1120];
+    @apply antialiased;
+    color-scheme: dark;
+    background-color: #09090b;
+    color: #fafafa;
+  }
+
+  /* Принудительно тёмные стили для элементов форм */
+  input, select, textarea, button {
+    color-scheme: dark;
   }
 }
 
 @layer components {
   .surface-card {
-    @apply bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm transition-all duration-200;
+    @apply bg-zinc-900 border border-zinc-800 rounded-xl;
   }
 
   .cell-card {
-    @apply bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2.5 transition-all duration-200;
+    @apply bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 transition-colors duration-200;
   }
 
   .cell-card:hover {
-    @apply bg-slate-50 dark:bg-[#1e293b] border-slate-300 dark:border-slate-700;
+    @apply bg-zinc-900 border-zinc-700;
   }
 
   .status-free {
@@ -27,10 +35,6 @@
 
   .status-occupied {
     @apply border-l-4 border-l-rose-500;
-  }
-
-  .modal-panel {
-    @apply bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl;
   }
 }
 
