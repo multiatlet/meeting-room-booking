@@ -14,7 +14,7 @@ const VisitorCounter: React.FC = () => {
   if (count === null) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 z-40 bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-600 text-sm shadow-md">
+    <div className="fixed bottom-4 left-4 z-40 bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-600 text-sm shadow-lg">
       👥 Счётчик: <span className="font-semibold text-slate-900">{count}</span>
     </div>
   );

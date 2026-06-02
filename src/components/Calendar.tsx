@@ -77,20 +77,6 @@ const Calendar: React.FC = () => {
 
   const closeModal = () => setModal(null);
 
-  const generateMeetingLink = () => {
-    if (!modal) return '';
-    const room = rooms.find(r => r.id === modal.roomId);
-    const base = `${room?.name || 'meeting'}-${format(modal.date, 'yyyy-MM-dd')}-${startTime}`;
-    const meetingId = base.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
-    // Ваш собственный Jitsi-сервер
-    return `https://xn--b1aedk6a.xn--b1agrpl1f.pw/${meetingId}`;
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    alert('Ссылка скопирована!');
-  };
-
   const handleSave = async () => {
     if (!modal) return;
     if (!userName.trim()) {
@@ -113,9 +99,6 @@ const Calendar: React.FC = () => {
 
     setCurrentUser(userName.trim());
 
-    const isVirtual = modal.roomId === 'virtual-video';
-    const finalVideoLink = isVirtual ? generateMeetingLink() : undefined;
-
     const bookingData: Omit<import('../firebase').Booking, 'id'> = {
       roomId: modal.roomId,
       date: dateStr,
@@ -124,7 +107,6 @@ const Calendar: React.FC = () => {
       userName: userName.trim(),
     };
     if (topic.trim()) bookingData.topic = topic.trim();
-    if (finalVideoLink) bookingData.videoMeetingLink = finalVideoLink;
 
     await addBooking(bookingData);
 
@@ -145,7 +127,6 @@ const Calendar: React.FC = () => {
             start: startTime,
             end: endTime,
             topic: topic.trim() || undefined,
-            videoMeetingLink: finalVideoLink,
             recipients: emails,
           }),
         });
@@ -179,7 +160,7 @@ const Calendar: React.FC = () => {
     <div className="relative overflow-x-auto scrollbar-hide pt-1">
       {isRefreshing && (
         <div className="absolute inset-0 z-20 flex items-start justify-center pt-8 pointer-events-none">
-          <div className="bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-sm text-slate-600 pointer-events-auto">
+          <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-sm text-slate-600 pointer-events-auto">
             Обновление данных...
           </div>
         </div>
@@ -205,7 +186,7 @@ const Calendar: React.FC = () => {
                 <div className="text-xs uppercase tracking-wider text-slate-500">
                   {format(date, 'EEE', { locale: ru })}
                 </div>
-                <div className={`text-sm md:text-base font-medium ${isWeekend ? 'text-rose-500' : 'text-slate-900'}`}>
+                <div className={`text-sm md:text-base font-medium ${isWeekend ? 'text-rose-600' : 'text-slate-900'}`}>
                   {format(date, 'd MMM', { locale: ru })}
                 </div>
               </div>
@@ -224,9 +205,7 @@ const Calendar: React.FC = () => {
                     {room.name}
                   </span>
                 </div>
-                {room.capacity > 0 && (
-                  <span className="text-slate-500 text-[10px] md:text-xs mt-1">{room.capacity} мест</span>
-                )}
+                <span className="text-slate-500 text-[10px] md:text-xs mt-1">{room.capacity} мест</span>
               </div>
 
               {dates.map(date => {
@@ -254,24 +233,13 @@ const Calendar: React.FC = () => {
                               {b.topic || b.userName}
                             </div>
                             <div className="text-slate-500">{b.start}–{b.end}</div>
-                            {b.videoMeetingLink && (
-                              <a
-                                href={b.videoMeetingLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 text-xs underline"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                Видео
-                              </a>
-                            )}
                             {b.userName === currentUser && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleDelete(b.id);
                                 }}
-                                className="mt-1 text-xs text-rose-500 hover:text-rose-600 transition-colors"
+                                className="mt-1 text-xs text-rose-600 hover:text-rose-800 transition-colors"
                                 title="Удалить бронь"
                               >
                                 Удалить
@@ -298,7 +266,7 @@ const Calendar: React.FC = () => {
           onClick={closeModal}
         >
           <div
-            className="bg-white border border-slate-200 p-6 rounded-2xl w-full max-w-[440px] max-h-[90vh] overflow-y-auto shadow-2xl"
+            className="bg-white border border-slate-200 p-6 rounded-2xl w-full max-w-[440px] max-h-[90vh] overflow-y-auto shadow-xl"
             onClick={e => e.stopPropagation()}
           >
             <h2 className="text-xl font-semibold text-slate-900 mb-1">
@@ -317,7 +285,7 @@ const Calendar: React.FC = () => {
                   placeholder="Ваше имя"
                   value={userName}
                   onChange={e => setUserName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 outline-none"
                   autoFocus
                 />
 
@@ -326,7 +294,7 @@ const Calendar: React.FC = () => {
                   placeholder="Тема встречи"
                   value={topic}
                   onChange={e => setTopic(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 outline-none"
                 />
 
                 <div>
@@ -334,7 +302,7 @@ const Calendar: React.FC = () => {
                   <select
                     value={startTime}
                     onChange={e => setStartTime(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900"
                   >
                     {availableStartSlots.map(slot => (
                       <option key={slot} value={slot}>{slot}</option>
@@ -347,7 +315,7 @@ const Calendar: React.FC = () => {
                   <select
                     value={duration}
                     onChange={e => setDuration(parseInt(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900"
                   >
                     {DURATION_OPTIONS.map(mins => (
                       <option key={mins} value={mins}>
@@ -360,23 +328,6 @@ const Calendar: React.FC = () => {
                 <div className="bg-slate-50 rounded-xl p-3 text-sm text-slate-600">
                   🕒 {startTime} – {addMinutesToTime(startTime, duration)}
                 </div>
-
-                {selectedRoom.id === 'virtual-video' && (
-                  <div className="border-t border-slate-200 pt-4">
-                    <p className="text-sm font-medium text-slate-900 mb-2">Ссылка на видеовстречу:</p>
-                    <div className="bg-slate-50 rounded-xl p-3">
-                      <code className="block text-xs bg-slate-100 p-2 rounded break-all mb-2 text-slate-900">
-                        {generateMeetingLink()}
-                      </code>
-                      <button
-                        onClick={() => copyToClipboard(generateMeetingLink())}
-                        className="w-full py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        Копировать ссылку
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 

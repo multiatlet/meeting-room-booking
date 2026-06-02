@@ -78,7 +78,7 @@ const Header: React.FC = () => {
           onClick={() => setShowSettings(false)}
         >
           <div
-            className="bg-white border border-slate-200 p-6 rounded-2xl w-[420px] max-w-full shadow-2xl"
+            className="bg-white border border-slate-200 p-6 rounded-2xl w-[420px] max-w-full shadow-xl"
             onClick={e => e.stopPropagation()}
           >
             <h2 className="text-xl font-semibold text-slate-900 mb-4">Настройки уведомлений (админ)</h2>
@@ -90,7 +90,7 @@ const Header: React.FC = () => {
               placeholder="admin@vpluse.ru, manager@vpluse.ru"
               value={emailsInput}
               onChange={e => setEmailsInput(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 outline-none mb-6"
+              className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 outline-none mb-6"
             />
             <div className="flex gap-3">
               <button
