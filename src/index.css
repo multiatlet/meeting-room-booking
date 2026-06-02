@@ -4,15 +4,13 @@
 
 @layer base {
   body {
-    @apply antialiased;
-    background-color: #f8fafc;
-    color: #0f172a;
+    @apply antialiased bg-[#f8fafc] text-slate-900;
   }
 }
 
 @layer components {
   .surface-card {
-    @apply bg-white border border-slate-200 rounded-xl;
+    @apply bg-white border border-slate-200 rounded-xl shadow-sm;
   }
 
   .cell-card {
